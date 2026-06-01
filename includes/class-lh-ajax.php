@@ -33,6 +33,7 @@ class LH_Ajax
     'lhp_save_delegated_user',
     'lhp_remove_delegated_user',
     'lhp_activate_delegated_access',
+    'lhp_upload_death_doc',
     'lhp_get_my_delegated_records',
     'lhp_create_parent_record',
     'lhp_get_invite_link',
@@ -1415,8 +1416,9 @@ class LH_Ajax
     static function lhp_activate_delegated_access()
     {
     self::verify();
-    $post_id = intval($_POST['record_id'] ?? 0);
+    $post_id  = intval($_POST['record_id'] ?? 0);
     $entry_id = sanitize_key($_POST['entry_id'] ?? '');
+    $doc_id   = intval($_POST['doc_id'] ?? 0);
     if (!$post_id || !LH_Auth::verify_record_access($post_id))
     wp_send_json_error('Access denied.');
 
@@ -1424,12 +1426,57 @@ class LH_Ajax
     foreach ($delegated as &$d) {
     if (($d['id'] ?? '') === $entry_id) {
       $d['status'] = 'active';
+      $d['activated_at'] = current_time('mysql');
+      $d['activated_by'] = get_current_user_id();
+      if ($doc_id) {
+        $d['death_doc_id']   = $doc_id;
+        $d['death_doc_name'] = basename(get_attached_file($doc_id) ?: '');
+      }
       break;
     }
     }
     update_post_meta($post_id, '_flp_delegated_users', $delegated);
-    self::log_activity('access_activated', "Delegated access activated on record #{$post_id}.", $post_id);
+    self::log_activity('access_activated', "Delegated access activated on record #{$post_id}." . ($doc_id ? " Verification doc #{$doc_id} attached." : ''), $post_id);
     wp_send_json_success('Access activated.');
+    }
+
+    static function lhp_upload_death_doc()
+    {
+    self::verify();
+    $post_id  = intval($_POST['record_id'] ?? 0);
+    $entry_id = sanitize_key($_POST['entry_id'] ?? '');
+    if (!$post_id || !LH_Auth::verify_record_access($post_id))
+    wp_send_json_error('Access denied.');
+
+    if (empty($_FILES['file']['tmp_name']))
+    wp_send_json_error('No file received.');
+
+    $allowed = ['application/pdf','image/jpeg','image/jpg','image/png'];
+    $mime = mime_content_type($_FILES['file']['tmp_name']);
+    if (!in_array($mime, $allowed))
+    wp_send_json_error('Invalid file type. PDF, JPG, PNG only.');
+
+    if ($_FILES['file']['size'] > 10 * 1024 * 1024)
+    wp_send_json_error('File exceeds 10 MB limit.');
+
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+
+    $attachment_id = media_handle_upload('file', $post_id);
+    if (is_wp_error($attachment_id))
+    wp_send_json_error($attachment_id->get_error_message());
+
+    update_post_meta($attachment_id, '_lhp_death_verification', 1);
+    update_post_meta($attachment_id, '_lhp_death_doc_entry', $entry_id);
+    if (!empty($_POST['notes']))
+    update_post_meta($attachment_id, '_lhp_death_doc_notes', sanitize_textarea_field($_POST['notes']));
+
+    wp_send_json_success([
+    'attachment_id' => $attachment_id,
+    'file_name'     => basename(get_attached_file($attachment_id)),
+    'url'           => wp_get_attachment_url($attachment_id),
+    ]);
     }
 
     static function lhp_get_my_delegated_records()

@@ -1526,8 +1526,8 @@
     var items = [
       { icon: "bi-diagram-2", label: "Relationship to You", value: relLabel, highlight: true },
       { icon: "bi-person-vcard", label: "Subject Name", value: (s.full_name || "—") + (s.dob ? " · DOB: " + s.dob : "") },
-      { icon: "bi-telephone", label: "Phone", value: s.phone || "—" },
-      { icon: "bi-envelope", label: "Email", value: s.email || "—" },
+      { icon: "bi-telephone", label: "Phone", value: $("#oo-s-phone").is(":checked") ? "Prefer not to include" : (s.phone || "—") },
+      { icon: "bi-envelope", label: "Email", value: $("#oo-s-email").is(":checked") ? "Prefer not to include" : (s.email || "—") },
       { icon: "bi-geo-alt", label: "Address", value: s.address || "—" },
       { icon: "bi-people", label: "Children / Heirs", value: childRows.length ? childRows.length + (childRows.length === 1 ? " person: " : " people: ") + childRows.map(function(c){return c.full_name||"?";}).join(", ") : "None added" },
       { icon: "bi-shield-lock", label: "Access Contacts", value: accessRows.length ? accessRows.length + (accessRows.length === 1 ? " person: " : " people: ") + accessRows.map(function(a){return a.full_name||"?";}).join(", ") : "None added" },
@@ -4050,26 +4050,66 @@
         renderDelegatedList();
       }
     });
-    // Activate access
+    // Activate access — open death verification modal first
     $(document).on("click", ".del-activate-btn", function () {
       var id = $(this).data("id");
       var rid = parseInt($("#lhp-record-id").val()) || 0;
-      if (!rid) {
-        toast("Save the record first.", "info");
-        return;
-      }
-      ajax(
-        "lhp_activate_delegated_access",
-        { record_id: rid, entry_id: id },
-        function () {
-          var entry = delegatedEntries.find(function (d) {
-            return d.id === id;
-          });
-          if (entry) entry.status = "active";
-          renderDelegatedList();
-          toast("Access activated.");
-        },
-      );
+      if (!rid) { toast("Save the record first.", "info"); return; }
+      $("#dv-entry-id").val(id);
+      $("#dv-file-input").val("").data("file", null);
+      $("#dv-file-preview").addClass("d-none");
+      $("#dv-file-error").addClass("d-none");
+      $("#dv-notes").val("");
+      showModal("lhp-death-verify-modal");
+    });
+
+    // Death verify modal — browse trigger
+    $(document).on("click", "#dv-browse-trigger", function () { $("#dv-file-input").trigger("click"); });
+    $(document).on("click", "#dv-drop-zone", function () { $("#dv-file-input").trigger("click"); });
+    $(document).on("change", "#dv-file-input", function () {
+      var f = this.files[0]; if (!f) return;
+      if (f.size > 10 * 1024 * 1024) { toast("File must be under 10 MB.", "error"); return; }
+      $(this).data("file", f);
+      $("#dv-file-name").text(f.name);
+      $("#dv-file-preview").removeClass("d-none");
+      $("#dv-file-error").addClass("d-none");
+    });
+    $(document).on("click", "#dv-file-clear", function () {
+      $("#dv-file-input").val("").data("file", null);
+      $("#dv-file-preview").addClass("d-none");
+    });
+
+    // Death verify — confirm & activate
+    $(document).on("click", "#dv-confirm-btn", function () {
+      var $btn = $(this);
+      var id = $("#dv-entry-id").val();
+      var rid = parseInt($("#lhp-record-id").val()) || 0;
+      var file = $("#dv-file-input").data("file");
+      if (!file) { $("#dv-file-error").removeClass("d-none"); return; }
+      btnLoad($btn, true);
+      var fd = new FormData();
+      fd.append("action", "lhp_upload_death_doc");
+      fd.append("nonce", cfg.nonce);
+      fd.append("record_id", rid);
+      fd.append("entry_id", id);
+      fd.append("notes", $("#dv-notes").val().trim());
+      fd.append("file", file);
+      $.ajax({ url: cfg.ajax_url, type: "POST", data: fd, processData: false, contentType: false })
+        .done(function (r) {
+          if (!r.success) { btnLoad($btn, false); toast(r.data || "Upload failed.", "error"); return; }
+          ajax("lhp_activate_delegated_access", { record_id: rid, entry_id: id, doc_id: r.data.attachment_id },
+            function () {
+              var entry = delegatedEntries.find(function (d) { return d.id === id; });
+              if (entry) { entry.status = "active"; entry.death_doc_id = r.data.attachment_id; entry.death_doc_name = r.data.file_name; }
+              renderDelegatedList();
+              hideModal("lhp-death-verify-modal");
+              btnLoad($btn, false);
+              toast("Access activated. Verification document saved.");
+            },
+            function (m) { btnLoad($btn, false); toast(m, "error"); }
+          );
+        })
+        .fail(function () { btnLoad($btn, false); toast("Upload failed. Try again.", "error"); });
     });
   }
 
@@ -4102,8 +4142,11 @@
           d.status !== "active" && d.condition_type === "manual"
             ? '<button class="btn btn-sm btn-outline-success del-activate-btn" data-id="' +
               d.id +
-              '"><i class="bi bi-play-fill me-1"></i>Activate</button>'
+              '"><i class="bi bi-file-earmark-medical me-1"></i>Verify &amp; Activate</button>'
             : "";
+        var deathDocBadge = d.death_doc_id
+          ? '<div class="small mt-1 text-success"><i class="bi bi-patch-check-fill me-1"></i>Verified — <span class="text-muted">' + esc(d.death_doc_name || "document uploaded") + '</span></div>'
+          : "";
         return (
           '<div class="lhp-delegated-item">' +
           '<div class="d-flex align-items-center gap-3">' +
@@ -4123,6 +4166,7 @@
           ' me-1"></i>' +
           condText +
           "</div>" +
+          deathDocBadge +
           "</div>" +
           '<div class="d-flex gap-2 align-items-center">' +
           statusBadge +

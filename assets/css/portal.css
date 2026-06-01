@@ -3093,3 +3093,17 @@
     background: #e2e8f0 !important;
   }
 }
+
+/* ── Death Verification Upload Drop Zone ── */
+.lhp-upload-drop-zone {
+  border: 2px dashed var(--lhp-border);
+  border-radius: 10px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--lhp-transition), background var(--lhp-transition);
+}
+.lhp-upload-drop-zone:hover {
+  border-color: var(--lhp-primary);
+  background: var(--lhp-primary-lt);
+}
