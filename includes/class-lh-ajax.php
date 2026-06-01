@@ -288,7 +288,7 @@ class LH_Ajax
     return;
     }
 
-    $reset_url = home_url('/login?action=reset&key=' . rawurlencode($key) . '&login=' . rawurlencode($user->user_login));
+    $reset_url = add_query_arg(['action' => 'reset', 'key' => $key, 'login' => $user->user_login], lhp_page_url('login'));
 
     $site_name = get_bloginfo('name');
     $subject   = "Reset your {$site_name} password";
@@ -332,7 +332,7 @@ class LH_Ajax
     reset_password($user, $pass);
     wp_send_json_success([
         'message'  => 'Password updated! Redirecting to sign in…',
-        'redirect' => home_url('/login'),
+        'redirect' => lhp_page_url('login'),
     ]);
     }
 
@@ -340,7 +340,7 @@ class LH_Ajax
     static function lhp_logout()
     {
     wp_logout();
-    wp_send_json_success(['redirect' => home_url('/login')]);
+    wp_send_json_success(['redirect' => lhp_page_url('login')]);
     }
 
     /* ── GET ALL RECORDS (planner) ────────────────────── */
@@ -702,7 +702,7 @@ class LH_Ajax
     update_post_meta($post_id, '_flp_owner_id', $parent_id);
     update_user_meta($parent_id, '_flp_record_id', $post_id);
 
-    $login_url = home_url('/login');
+    $login_url = lhp_page_url('login');
     $planner = get_userdata($uid);
     $subject = 'Your Family Lighthouse Invitation';
     $message = "Hello {$name},\n\nYour planner, {$planner->display_name}, has set up a Family Lighthouse record for you.\n\nLogin here: {$login_url}\n\nEmail: {$email}\nTemporary Password: {$temp_pass}\n\nPlease log in and change your password as soon as possible.\n\nThis is not a will or legal document. — Family Lighthouse";
@@ -857,7 +857,7 @@ class LH_Ajax
     }
 
     // Send welcome email
-    $login_url = home_url('/login');
+    $login_url = lhp_page_url('login');
     wp_mail($email, 'Your Family Lighthouse Account', "Hello {$name},\n\nYour account has been created.\n\nLogin: {$login_url}\nEmail: {$email}\nPassword: {$pass}\n\nPlease log in and change your password.\n\n— Family Lighthouse");
 
     self::log_activity('user_created', "User {$name} ({$role}) created.", 0, $uid);
@@ -1385,7 +1385,7 @@ class LH_Ajax
 
     // Send invite email
     if ($temp_pass && $user_id) {
-    $login_url = home_url('/login');
+    $login_url = lhp_page_url('login');
     $owner = wp_get_current_user();
     $cond_text = $cond === 'immediate' ? 'You have immediate access.'
       : ($cond === 'date' ? "Your access will activate on: {$cdate}"
@@ -1514,7 +1514,7 @@ class LH_Ajax
     $trans_key = 'lhp_access_otp_' . $uid . '_' . $post_id;
     set_transient($trans_key, wp_hash($otp), 15 * MINUTE_IN_SECONDS);
 
-    $login_url = home_url('/lhp-login');
+    $login_url = lhp_page_url('login');
     $subject   = 'Your Family Lighthouse Access Verification Code';
     $message   = "Hello {$user->display_name},\r\n\r\n";
     $message  .= "Your email verification code to activate Lighthouse access:\r\n\r\n";
@@ -2136,7 +2136,7 @@ class LH_Ajax
     if ($phone) update_user_meta($owner2_id, '_flp_phone', $phone);
 
     // Send welcome email
-    $login_url = home_url('/login');
+    $login_url = lhp_page_url('login');
     $owner     = get_userdata($uid);
     wp_mail($email, 'You\'ve been added as a Family Lighthouse co-owner',
       "Hello {$name},\r\n\r\n{$owner->display_name} has added you as a co-owner of their Family Lighthouse record.\r\n\r\n" .
@@ -2233,7 +2233,7 @@ class LH_Ajax
     $owner_id   = (int) get_post_meta($post_id, '_flp_owner_id', true);
     $owner_user = $owner_id ? get_userdata($owner_id) : false;
     $owner_name = $owner_user ? $owner_user->display_name : 'The Family Lighthouse owner';
-    $login_url  = home_url('/lhp-login');
+    $login_url  = lhp_page_url('login');
 
     $priv_labels = [
     'unlock_all'     => 'May unlock Family Lighthouse for all beneficiaries',
@@ -2385,7 +2385,7 @@ class LH_Ajax
 
         if ($is_self) {
             wp_logout();
-            wp_send_json_success(['redirect' => home_url('/login?deleted=1')]);
+            wp_send_json_success(['redirect' => add_query_arg('deleted', '1', lhp_page_url('login'))]);
         } else {
             wp_send_json_success('Co-owner deleted.');
         }

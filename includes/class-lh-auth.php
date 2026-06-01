@@ -50,7 +50,7 @@ class LH_Auth {
 
     static function block_admin() {
         if ( is_admin() && !wp_doing_ajax() ) {
-            if ( self::is_portal_user() ) { wp_safe_redirect(home_url('/login')); exit; }
+            if ( self::is_portal_user() ) { wp_safe_redirect(lhp_page_url('login')); exit; }
         }
     }
 
@@ -84,26 +84,26 @@ class LH_Auth {
             return;
         }
         if ( in_array($slug,$admin_pages) ) {
-            if ( !is_user_logged_in() ) { wp_safe_redirect(home_url('/login')); exit; }
-            if ( !in_array($role,['lhp_super_admin','lighthouse_law_firm','administrator']) ) { wp_safe_redirect(home_url('/login')); exit; }
+            if ( !is_user_logged_in() ) { wp_safe_redirect(lhp_page_url('login')); exit; }
+            if ( !in_array($role,['lhp_super_admin','lighthouse_law_firm','administrator']) ) { wp_safe_redirect(lhp_page_url('login')); exit; }
             return;
         }
         if ( in_array($slug,$planner_pages) ) {
-            if ( !is_user_logged_in() ) { wp_safe_redirect(home_url('/login')); exit; }
+            if ( !is_user_logged_in() ) { wp_safe_redirect(lhp_page_url('login')); exit; }
             if ( $role === 'lighthouse_parent'    ) { wp_safe_redirect(home_url('/dashboard'));  exit; }
             if ( $role === 'lighthouse_delegated' ) { wp_safe_redirect(home_url('/delegated-dashboard')); exit; }
             return;
         }
         if ( in_array($slug,$parent_pages) ) {
-            if ( !is_user_logged_in() ) { wp_safe_redirect(home_url('/login')); exit; }
+            if ( !is_user_logged_in() ) { wp_safe_redirect(lhp_page_url('login')); exit; }
             if ( $role === 'lighthouse_planner'  ) { wp_safe_redirect(home_url('/planner-dashboard')); exit; }
             if ( $role === 'lighthouse_delegated' ) { wp_safe_redirect(home_url('/delegated-dashboard'));      exit; }
             if ( in_array($role,['lhp_super_admin','lighthouse_law_firm']) ) { wp_safe_redirect(home_url('/fml-admin')); exit; }
             return;
         }
         if ( in_array($slug,$delegated_pages) ) {
-            if ( !is_user_logged_in() ) { wp_safe_redirect(home_url('/login')); exit; }
-            if ( $role !== 'lighthouse_delegated' && $role !== 'administrator' ) { wp_safe_redirect(home_url('/login')); exit; }
+            if ( !is_user_logged_in() ) { wp_safe_redirect(lhp_page_url('login')); exit; }
+            if ( $role !== 'lighthouse_delegated' && $role !== 'administrator' ) { wp_safe_redirect(lhp_page_url('login')); exit; }
             return;
         }
     }

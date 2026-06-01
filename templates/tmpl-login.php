@@ -80,7 +80,7 @@
 
         <p class="text-center text-muted" style="font-size:14px">
           Don&#39;t have an account?
-          <a href="<?php echo esc_url( home_url( '/register' ) ); ?>" class="lhp-link fw-semibold">Create one free</a>
+          <a href="<?php echo esc_url( lhp_page_url( 'register' ) ); ?>" class="lhp-link fw-semibold">Create one free</a>
         </p>
 
         <p class="lhp-legal-note text-center mt-4">

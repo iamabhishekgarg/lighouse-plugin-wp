@@ -89,7 +89,7 @@ add_action( 'login_init', function () {
         $user        = wp_get_current_user();
         $admin_roles = [ 'administrator', 'lhp_super_admin' ];
         if ( empty( array_intersect( $admin_roles, (array) $user->roles ) ) ) {
-            wp_safe_redirect( home_url( '/login' ) );
+            wp_safe_redirect( lhp_page_url( 'login' ) );
             exit;
         }
     }
@@ -886,7 +886,7 @@ body.lhp-ep-welcome-page .lhp-root button.lhp-ep-tab.lhp-ep-tab-active{color:#ff
             </button>
           </div>
           <p class="text-center text-muted mt-3" style="font-size:13px">
-            <a href="<?php echo esc_url( home_url('/login') ); ?>#forgot" class="lhp-link">Forgot password?</a>
+            <a href="<?php echo esc_url( lhp_page_url('login') ); ?>#forgot" class="lhp-link">Forgot password?</a>
           </p>
         </form>
       </div>
@@ -1151,7 +1151,7 @@ function lhp_get_config() {
         'home_url'   => home_url(),
         'planner_url'   => home_url( '/planner-dashboard' ),
         'parent_url' => home_url( '/dashboard' ),
-        'login_url'  => home_url( '/login' ),
+        'login_url'  => lhp_page_url( 'login' ),
         'admin_url'  => home_url( '/fml-admin' ),
     ];
 }
@@ -1160,15 +1160,54 @@ function lhp_get_config() {
  * Centralized URL lookup. Use instead of hardcoding slug strings.
  */
 function lhp_page_url( $key ) {
-    $urls = [
-        'login'         => home_url( '/login' ),
-        'register'      => home_url( '/register' ),
-        'planner'       => home_url( '/planner-dashboard' ),
-        'parent'        => home_url( '/dashboard' ),
-        'admin'         => home_url( '/fml-admin' ),
-        'delegated'     => home_url( '/delegated-dashboard' ),
+    static $cache = [];
+    if ( isset( $cache[ $key ] ) ) return $cache[ $key ];
+
+    $shortcode_map = [
+        'login'     => 'lhp_login',
+        'register'  => 'lhp_register',
+        'planner'   => 'lhp_planner_dashboard',
+        'parent'    => 'lhp_parent_dashboard',
+        'admin'     => 'lhp_admin_dashboard',
+        'delegated' => 'lhp_delegated_dashboard',
     ];
-    return $urls[ $key ] ?? home_url();
+
+    if ( isset( $shortcode_map[ $key ] ) ) {
+        $sc = $shortcode_map[ $key ];
+        $pages = get_posts( [
+            'post_type'      => 'page',
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            's'              => '[' . $sc . ']',
+        ] );
+        // Fallback: search post_content directly (WP search doesn't scan shortcode brackets reliably)
+        if ( empty( $pages ) ) {
+            global $wpdb;
+            $row = $wpdb->get_row( $wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts} WHERE post_status='publish' AND post_type='page' AND post_content LIKE %s LIMIT 1",
+                '%[' . $sc . ']%'
+            ) );
+            if ( $row ) $pages = [ get_post( $row->ID ) ];
+        }
+        if ( ! empty( $pages ) ) {
+            $url = get_permalink( $pages[0]->ID );
+            $cache[ $key ] = $url;
+            return $url;
+        }
+    }
+
+    // Fallback to slug-based guesses
+    $fallbacks = [
+        'login'     => '/lhp-login',
+        'register'  => '/lhp-register',
+        'planner'   => '/planner-dashboard',
+        'parent'    => '/dashboard',
+        'admin'     => '/fml-admin',
+        'delegated' => '/delegated-dashboard',
+    ];
+    $url = home_url( $fallbacks[ $key ] ?? '/' );
+    $cache[ $key ] = $url;
+    return $url;
 }
 
 /* ─────────────────────────────────────────────────────────────

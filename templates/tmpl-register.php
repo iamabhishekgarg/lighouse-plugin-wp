@@ -38,7 +38,7 @@
         </div>
       </div>
       <p class="text-center text-muted" style="font-size:14px">
-        Already have an account? <a href="<?php echo esc_url( home_url('/login') ); ?>" class="lhp-link fw-semibold">Sign in</a>
+        Already have an account? <a href="<?php echo esc_url( lhp_page_url('login') ); ?>" class="lhp-link fw-semibold">Sign in</a>
       </p>
     </div>
 
