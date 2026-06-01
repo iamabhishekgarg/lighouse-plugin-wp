@@ -4174,12 +4174,12 @@
 
     // Death verify modal — browse + drag & drop
     $(document).on("click", "#dv-drop-zone", function (e) {
-      if ($(e.target).is("#dv-browse-trigger") || $(e.target).closest("#dv-browse-trigger").length) return;
-      $("#dv-file-input").trigger("click");
+      if ($(e.target).is("#dv-file-input") || $(e.target).is("#dv-browse-trigger") || $(e.target).closest("#dv-browse-trigger").length) return;
+      document.getElementById("dv-file-input").click();
     });
     $(document).on("click", "#dv-browse-trigger", function (e) {
       e.stopPropagation();
-      $("#dv-file-input").trigger("click");
+      document.getElementById("dv-file-input").click();
     });
     function dvHandleFile(f) {
       if (!f) return;
@@ -4461,14 +4461,15 @@
       showModal("lhp-self-activate-modal");
     });
 
-    // File browse — click on zone or browse link (stop propagation so both don't fire)
+    // File browse — use native .click() to avoid jQuery bubble loop
+    // (#sa-file-input is inside #sa-drop-zone; trigger() would bubble back up infinitely)
     $(document).on("click", "#sa-drop-zone", function (e) {
-      if ($(e.target).is("#sa-browse-trigger") || $(e.target).closest("#sa-browse-trigger").length) return;
-      $("#sa-file-input").trigger("click");
+      if ($(e.target).is("#sa-file-input") || $(e.target).is("#sa-browse-trigger") || $(e.target).closest("#sa-browse-trigger").length) return;
+      document.getElementById("sa-file-input").click();
     });
     $(document).on("click", "#sa-browse-trigger", function (e) {
       e.stopPropagation();
-      $("#sa-file-input").trigger("click");
+      document.getElementById("sa-file-input").click();
     });
 
     function saHandleFile(f) {
