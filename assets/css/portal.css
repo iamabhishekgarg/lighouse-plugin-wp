@@ -1,0 +1,3095 @@
+/* ═══════════════════════════════════════════════════════════
+   Lighthouse Portal — portal.css  v1.2
+   Bootstrap 5 · Single source of truth
+═══════════════════════════════════════════════════════════ */
+
+/* ── VARIABLES ──────────────────────────────────────────── */
+:root {
+  --lhp-primary: #4f46e5;
+  --lhp-primary-rgb: 79, 70, 229;
+  --lhp-primary-d: #3730a3;
+  --lhp-primary-lt: #eef2ff;
+  --lhp-primary-md: #c7d2fe;
+  --lhp-page-bg: #f8fafc;
+  --lhp-success: #059669;
+  --lhp-success-rgb: 5, 150, 105;
+  --lhp-warn: #d97706;
+  --lhp-danger: #dc2626;
+  --lhp-danger-rgb: 220, 38, 38;
+  --lhp-purple: #8b5cf6;
+  --lhp-purple-lt: #f3f0ff;
+  --lhp-dark: #111827;
+  --lhp-dark-2: #1f2937;
+  --lhp-dark-3: #374151;
+  --lhp-mid: #6b7280;
+  --lhp-light: #f9fafb;
+  --lhp-border: #e5e7eb;
+  --lhp-white: #ffffff;
+  --lhp-max-width: 1140px;
+  --lhp-sidebar-w: 272px;
+  --lhp-topbar-h: 62px;
+  --lhp-r: 10px;
+  --lhp-r-lg: 14px;
+  --lhp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --lhp-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --lhp-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --lhp-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.14);
+  --lhp-font: "Inter Tight", "Inter", system-ui, sans-serif;
+  --lhp-transition: 0.18s ease;
+  /* ── PHP overrides this per-page via lhp_hide_chrome_head(). Default 0 for auth pages. ── */
+  --lhp-site-offset: 0px;     /* overridden to 32px (admin bar) or theme header height by PHP */
+  --lhp-footer-offset: 70px;  /* bottom: site footer height (set 0 if no fixed footer) */
+}
+
+/* ── HIDE THEME PAGE TITLE ON PORTAL PAGES ──────────────── */
+/* The PHP body_class filter adds .lhp-portal-page when any
+   plugin shortcode is on the page. All selectors below cover
+   OceanWP, Hello Elementor, Astra, GeneratePress, Divi, Avada
+   and the default WordPress block/classic themes.             */
+.lhp-portal-page .entry-title,
+.lhp-portal-page .page-title,
+.lhp-portal-page .page-header,
+.lhp-portal-page h1.page-title,
+.lhp-portal-page h2.page-title,
+.lhp-portal-page .page-title-wrap,
+.lhp-portal-page .page-title-bar,
+.lhp-portal-page #page-title,
+.lhp-portal-page .ocean-page-header,
+.lhp-portal-page #ocean-page-header,
+.lhp-portal-page .ast-page-title,
+.lhp-portal-page .ast-breadcrumbs-wrapper,
+.lhp-portal-page .elementor-page-title,
+.lhp-portal-page .elementor-widget-theme-post-title,
+.lhp-portal-page .fusion-page-title-bar,
+.lhp-portal-page .et_pb_title_container,
+.lhp-portal-page .entry-header,
+.lhp-portal-page .post-title,
+.lhp-portal-page .wp-block-post-title {
+  display: none !important;
+}
+
+/* ── BASE ────────────────────────────────────────────────── */
+.lhp-root *,
+.lhp-root *::before,
+.lhp-root *::after {
+  box-sizing: border-box;
+}
+.lhp-root {
+  font-family: var(--lhp-font);
+  color: var(--lhp-dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+/* Scoped under .lhp-root to beat Elementor Kit specificity (0,2,0 vs 0,1,1) */
+.lhp-root .lhp-btn-primary-solid {
+  background: #161C52 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 15px 30px 15px 30px !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-family: var(--lhp-font);
+  text-transform: none !important;
+  cursor: pointer !important;
+  transition: all var(--lhp-transition);
+  box-shadow: 0 2px 8px rgba(var(--lhp-primary-rgb), 0.28);
+  letter-spacing: 0.01em;
+}
+.lhp-root .lhp-btn-primary-solid:hover {
+  background: #4f46e5 !important;
+  /* border-color: var(--lhp-primary-d) !important; */
+  box-shadow: 0 6px 20px rgba(var(--lhp-primary-rgb), 0.4);
+  transform: translateY(-1px);
+  color: #fff !important;
+}
+.lhp-root .lhp-btn-primary-solid:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.lhp-root .lhp-btn-primary-solid:disabled {
+  opacity: 0.85;
+  transform: none;
+  box-shadow: none;
+  cursor: wait !important;
+}
+/* Keep bare class for any use outside .lhp-root */
+.lhp-btn-primary-solid {
+  background: #161C52;
+  color: #fff !important;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 15px 30px 15px 30px;
+  font-family: var(--lhp-font);
+  transition: all var(--lhp-transition);
+  box-shadow: 0 2px 8px rgba(var(--lhp-primary-rgb), 0.28);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lhp-btn-saving {
+  pointer-events: none !important;
+  opacity: 0.85 !important;
+  cursor: wait !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.lhp-btn-outline-primary {
+  background: transparent;
+  color: var(--lhp-primary);
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 16px;
+  font-family: var(--lhp-font);
+  transition: all var(--lhp-transition);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.lhp-btn-outline-primary:hover {
+  background: var(--lhp-primary-lt);
+  box-shadow: 0 3px 10px rgba(var(--lhp-primary-rgb), 0.18);
+  transform: translateY(-1px);
+}
+
+.lhp-link {
+  color: var(--lhp-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.lhp-link:hover {
+  color: var(--lhp-primary-d);
+  text-decoration: underline;
+}
+
+/* Scoped Bootstrap button overrides — won't fight themes on other elements */
+.lhp-root .btn-outline-danger {
+  color: var(--lhp-danger) !important;
+  border: 1.5px solid var(--lhp-danger) !important;
+  background-color: transparent !important;
+  font-family: var(--lhp-font) !important;
+  font-weight: 600;
+  border-radius: 8px !important;
+  transition: all var(--lhp-transition);
+  text-transform: none !important;
+}
+.lhp-root .btn-outline-danger:hover {
+  background-color: var(--lhp-danger) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(var(--lhp-danger-rgb), 0.2);
+}
+.lhp-root .btn-outline-secondary {
+  color: var(--lhp-mid) !important;
+  border: 1.5px solid var(--lhp-border) !important;
+  background-color: var(--lhp-white) !important;
+  font-family: var(--lhp-font) !important;
+  font-weight: 600;
+  border-radius: 8px !important;
+  transition: all var(--lhp-transition);
+  text-transform: none !important;
+}
+.lhp-root .btn-outline-secondary:hover {
+  background-color: var(--lhp-light) !important;
+  border-color: var(--lhp-mid) !important;
+  transform: translateY(-1px);
+}
+.lhp-root .btn-link {
+  color: var(--lhp-primary) !important;
+  text-decoration: none !important;
+  font-family: var(--lhp-font) !important;
+  font-weight: 600;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-left: 0;
+  padding-right: 0;
+}
+.lhp-root .btn-link:hover {
+  color: var(--lhp-primary-d) !important;
+  text-decoration: underline !important;
+}
+
+/* ── FORM CONTROLS ───────────────────────────────────────── */
+.lhp-root .form-control,
+.lhp-root .form-select {
+  border: 1.5px solid var(--lhp-border) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  min-height: 44px !important;
+  line-height: 1.5 !important;
+  font-size: 14px !important;
+  font-family: var(--lhp-font) !important;
+  color: var(--lhp-dark) !important;
+  background-color: var(--lhp-white) !important;
+  box-shadow: none;
+  transition:
+    border-color var(--lhp-transition),
+    box-shadow var(--lhp-transition);
+}
+/* Inputs and selects get fixed 44px height; textareas do not */
+.lhp-root input.form-control,
+.lhp-root .form-select {
+  height: 44px !important;
+}
+/* Textareas: height controlled by rows attribute and JS */
+.lhp-root textarea.form-control {
+  height: auto;
+  min-height: unset;
+}
+.lhp-root .form-control:focus,
+.lhp-root .form-select:focus {
+  outline: none !important;
+  border-color: var(--lhp-primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--lhp-primary-rgb), 0.15) !important;
+}
+.lhp-root .form-control:focus-visible,
+.lhp-root .form-select:focus-visible {
+  outline: 2px solid var(--lhp-primary) !important;
+  outline-offset: 1px !important;
+}
+.lhp-root .form-control:focus:not(:focus-visible),
+.lhp-root .form-select:focus:not(:focus-visible) {
+  outline: none !important;
+}
+.lhp-root .form-control.is-invalid,
+.lhp-root .form-select.is-invalid {
+  border-color: var(--lhp-danger) !important;
+  box-shadow: 0 0 0 3px rgba(var(--lhp-danger-rgb), 0.1) !important;
+}
+.lhp-root .form-control.is-valid,
+.lhp-root .form-select.is-valid {
+  border-color: var(--lhp-success) !important;
+  box-shadow: 0 0 0 3px rgba(var(--lhp-success-rgb), 0.1) !important;
+}
+.lhp-root .form-control[readonly] {
+  background-color: var(--lhp-light) !important;
+  cursor: default;
+}
+.lhp-root .form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lhp-dark-3);
+  margin-bottom: 6px;
+  font-family: var(--lhp-font);
+}
+/* ── INPUT-GROUP: enforce flex alignment so all children stay the same height ── */
+.lhp-root .input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+.lhp-root .input-group-text {
+  border: 1.5px solid var(--lhp-border) !important;
+  border-radius: 8px 0 0 8px !important;
+  background-color: var(--lhp-light) !important;
+  color: var(--lhp-mid) !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* Form-control / form-select: fill remaining space */
+.lhp-root .input-group > .form-control,
+.lhp-root .input-group > .form-select {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+/* Radius: only the last child gets right-rounded corners */
+.lhp-root .input-group > .form-control:not(:last-child),
+.lhp-root .input-group > .form-select:not(:last-child) {
+  border-radius: 0 !important;
+}
+.lhp-root .input-group > .form-control:last-child,
+.lhp-root .input-group > .form-select:last-child {
+  border-radius: 0 8px 8px 0 !important;
+}
+/* Prevent double-border between icon and input */
+.lhp-root .input-group > .form-control:not(:first-child),
+.lhp-root .input-group > .form-select:not(:first-child) {
+  border-left: none !important;
+}
+/* Eye-toggle button */
+.lhp-root .input-group .lhp-toggle-pass {
+  border-radius: 0 8px 8px 0 !important;
+  border: 1.5px solid var(--lhp-border) !important;
+  border-left: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 12px !important;
+  background-color: var(--lhp-white) !important;
+  color: var(--lhp-mid) !important;
+  flex-shrink: 0;
+  height: auto !important;
+}
+.lhp-root .input-group .lhp-toggle-pass:hover {
+  background-color: var(--lhp-light) !important;
+  color: var(--lhp-dark) !important;
+}
+/* Propagate invalid/valid border colour to the icon span */
+.lhp-root .input-group:has(.form-control.is-invalid) .input-group-text,
+.lhp-root .input-group:has(.form-select.is-invalid) .input-group-text {
+  border-color: var(--lhp-danger) !important;
+}
+.lhp-root .input-group:has(.form-control.is-valid) .input-group-text,
+.lhp-root .input-group:has(.form-select.is-valid) .input-group-text {
+  border-color: var(--lhp-success) !important;
+}
+/* Explicit dropdown arrow so themes can't wipe it out */
+.lhp-root .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 14px 10px !important;
+  padding-right: 36px !important;
+  cursor: pointer;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Country-code select inside input-group */
+.lhp-root .lhp-country-select {
+  border: none;
+  background: transparent;
+  padding: .375rem .5rem;
+  font-size: .875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── PORTAL PAGE VERTICAL SPACING ───────────────────────── */
+/* Reset OceanWP / Astra / GP entry-content padding on auth
+   pages so the center-wrap fills the content area cleanly.  */
+.lhp-portal-page .entry-content,
+.lhp-portal-page .page-content,
+.lhp-portal-page .ocean-container .entry-content {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Dashboard: boxed layout — sits between theme header and footer */
+.lhp-portal-page .lhp-portal-layout {
+  margin-top: var(--lhp-site-offset);
+  margin-bottom: var(--lhp-footer-offset);
+  height: calc(100vh - var(--lhp-site-offset) - var(--lhp-footer-offset));
+  min-height: 600px;
+  overflow: hidden;
+}
+
+/* Auth-split rendered as a card inside the center-wrap.
+   (login page). Matches the register page's boxed style
+   but is wider to accommodate the two-column layout.        */
+
+.lhp-auth-center-wrap .lhp-auth-split,
+.lhp-auth-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 580px;
+  width: min(var(--lhp-max-width), 100%);
+  max-width: 1200px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--lhp-shadow-lg);
+  border: 1px solid rgba(var(--lhp-primary-rgb), 0.08);
+}
+
+/* Brand panel */
+.lhp-auth-brand-panel {
+  background: linear-gradient(150deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.lhp-auth-brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 25% 40%,
+      rgba(165, 180, 252, 0.2) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 75% 70%,
+      rgba(99, 102, 241, 0.15) 0%,
+      transparent 55%
+    );
+}
+.lhp-auth-brand-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 380px;
+}
+
+.lhp-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 52px;
+}
+.lhp-brand-logo .bi,
+.lhp-brand-icon-sm {
+  font-size: 28px;
+  color: #a5b4fc;
+}
+
+.lhp-brand-headline {
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+}
+.lhp-brand-sub {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 16px;
+  margin-bottom: 40px;
+  line-height: 1.7;
+}
+
+.lhp-brand-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lhp-brand-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.lhp-brand-features li .bi {
+  font-size: 18px;
+  color: #a5b4fc;
+  flex-shrink: 0;
+}
+
+/* Form panel */
+.lhp-auth-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: var(--lhp-white);
+  overflow-y: auto;
+}
+.lhp-auth-form-inner {
+  width: 100%;
+  max-width: 440px;
+}
+
+.lhp-auth-form-header {
+  margin-bottom: 32px;
+}
+.lhp-auth-form-header h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+.lhp-auth-form-header p {
+  color: var(--lhp-mid);
+  margin: 0;
+  font-size: 15px;
+}
+
+.lhp-legal-note {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 24px;
+  text-align: center;
+}
+
+/* Register centred layout */
+.lhp-auth-center-wrap {
+  min-height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  padding-top: calc(var(--lhp-site-offset) + 40px);
+  padding-bottom: calc(var(--lhp-footer-offset) + 40px);
+}
+.lhp-auth-center-card {
+  background: var(--lhp-white);
+  border-radius: 20px;
+  box-shadow: var(--lhp-shadow-lg);
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 680px;
+  border: 1px solid rgba(var(--lhp-primary-rgb), 0.08);
+}
+.lhp-auth-center-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--lhp-dark);
+  margin-bottom: 32px;
+}
+
+.lhp-reg-step {
+  display: none;
+}
+.lhp-reg-step.active {
+  display: block;
+}
+.lhp-back-btn {
+  color: var(--lhp-primary) !important;
+  font-weight: 600;
+}
+.lhp-back-btn:hover {
+  text-decoration: underline !important;
+}
+
+/* Role cards */
+.lhp-role-card {
+  border: 2px solid var(--lhp-border);
+  border-radius: var(--lhp-r-lg);
+  cursor: pointer;
+  transition: all var(--lhp-transition);
+}
+.lhp-role-card:hover,
+.lhp-role-card.selected {
+  border-color: var(--lhp-primary);
+  box-shadow: 0 6px 24px rgba(var(--lhp-primary-rgb), 0.18);
+  transform: translateY(-3px);
+}
+.lhp-role-card.selected {
+  background: var(--lhp-primary-lt);
+}
+.lhp-role-icon-wrap .bi {
+  font-size: 36px;
+  color: var(--lhp-primary);
+}
+
+/* Password strength */
+.lhp-pass-strength-bar {
+  height: 4px;
+  background: var(--lhp-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.lhp-pass-strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition:
+    width 0.3s,
+    background 0.3s;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PORTAL LAYOUT
+═══════════════════════════════════════════════════════ */
+.lhp-portal-layout {
+  display: flex;
+  min-height: 0;
+  background: #f3f4f8;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.lhp-sidebar {
+  width: var(--lhp-sidebar-w);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(30,27,75,0.85) 0%, rgba(31,41,55,0.9) 100%), url('../images/sidebar-lighthouse.png') center/cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  top: auto;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.lhp-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 20px 16px;
+}
+.lhp-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 0;
+}
+/* Sidebar overrides global 28px lavender icon */
+.lhp-sidebar-brand .lhp-brand-icon-sm {
+  color: #a5b4fc;
+}
+/* ── Planner brand — stacked column ── */
+.lhp-sidebar-brand-planner {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 0;
+  width: 100%;
+}
+/* Name truncates, never wraps */
+.lhp-sidebar-brand-planner > span:last-of-type {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+}
+
+/*
+ * Logo image — transparent bg so white logos show on dark header.
+ * Any color logo renders on the dark navy background naturally.
+ * Use drop-shadow to add subtle outline visibility boost.
+ */
+.lhp-sidebar-planner-logo {
+  width: 100%;
+  max-width: fit-content;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  padding: 10px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.55));
+  background: rgba(255,255,255,1);
+    backdrop-filter: blur(10px);
+}
+
+/*
+ * Planner initials fallback — white text on semi-dark bg.
+ * Works for any logo scenario.
+ */
+.lhp-sidebar-planner-initials {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.lhp-sidebar-powered {
+  margin-top: 10px;
+  padding: 8px 6px 2px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.40);
+  text-align: center;
+}
+.lhp-sidebar-toggle {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.lhp-sidebar-user {
+  display: block;
+  margin: 0 12px 20px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* Fix #3: white bg prevents gradient bleed around transparent logo */
+.lhp-avatar-logo {
+  background: #fff !important;
+  padding: 6px !important;
+  border-radius: 10px !important;
+}
+.lhp-sidebar-avatar-img {
+  max-width: 100%;
+  max-height: 64px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  display: block;
+}
+.lhp-avatar-lg {
+  background: linear-gradient(135deg, var(--lhp-primary), #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(10px, 1.8vw, 13px);
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(var(--lhp-primary-rgb), 0.4);
+}
+.lhp-avatar-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lhp-primary), #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.lhp-sidebar-user-info {
+  min-width: 0;
+}
+.lhp-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lhp-sidebar-badge {
+  font-size: 11px;
+  color: #a5b4fc;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.lhp-sidebar-firm {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+.lhp-sidebar-nav {
+  padding: 0 12px;
+  flex: 1;
+}
+.lhp-sidebar-nav-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 0 8px;
+  margin-bottom: 6px;
+  margin-top: 2px;
+}
+
+/* ── Nav item — Image 1 pill style (pink for My Lighthouse) ── */
+.lhp-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: all var(--lhp-transition);
+}
+.lhp-nav-item .bi {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.lhp-nav-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+}
+.lhp-nav-item.active {
+  background: var(--lhp-primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(var(--lhp-primary-rgb), 0.45);
+  font-weight: 600;
+}
+
+.lhp-logout-btn {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+.lhp-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+}
+
+.lhp-sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Completion ring in sidebar */
+.lhp-sidebar-completion {
+  margin: 0 12px 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.lhp-ring-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.lhp-ring-svg {
+  width: 52px;
+  height: 52px;
+  transform: rotate(-90deg);
+}
+.lhp-ring-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.lhp-ring-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Backdrop */
+.lhp-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 999;
+  display: none;
+}
+.lhp-sidebar-backdrop.active {
+  display: block;
+}
+
+@media (max-width: 1199px) {
+  .lhp-sidebar {
+    position: fixed;
+    left: 0;
+    top: var(--lhp-site-offset);
+    height: calc(100vh - var(--lhp-site-offset));
+    transform: translateX(-100%);
+  }
+  .lhp-sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--lhp-shadow-lg);
+  }
+  .lhp-main-content {
+    padding-top: var(--lhp-topbar-h);
+    height: auto;
+    overflow-y: visible;
+  }
+}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.lhp-topbar {
+  position: fixed;
+  top: var(--lhp-site-offset);
+  left: 0;
+  right: 0;
+  height: var(--lhp-topbar-h);
+  z-index: 900;
+  background: linear-gradient(90deg, #1e1b4b, #312e81);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+.lhp-topbar-menu {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+}
+.lhp-topbar-brand {
+  flex: 1;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+}
+.lhp-topbar-brand .bi {
+  color: #a5b4fc;
+  margin-right: 6px;
+}
+
+/* ── MAIN CONTENT ────────────────────────────────────────── */
+.lhp-main-content {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 32px;
+  overflow-y: auto;
+}
+@media (max-width: 767px) {
+  .lhp-main-content {
+    padding: 20px 16px;
+  }
+}
+
+.lhp-view {
+  display: none;
+}
+.lhp-view.active {
+  display: block;
+  animation: lhp-fadein 0.22s ease;
+}
+@keyframes lhp-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lhp-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.lhp-page-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--lhp-dark);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.lhp-page-sub {
+  color: var(--lhp-mid);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── STAT CARDS ──────────────────────────────────────────── */
+.lhp-stat-card {
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  padding: 20px 22px;
+  box-shadow: var(--lhp-shadow);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--lhp-border);
+  border-left: 4px solid transparent;
+  transition:
+    transform var(--lhp-transition),
+    box-shadow var(--lhp-transition);
+}
+.lhp-stat-card:hover {
+  box-shadow: var(--lhp-shadow-md);
+}
+.lhp-stat-primary {
+  border-left-color: var(--lhp-primary);
+}
+.lhp-stat-success {
+  border-left-color: var(--lhp-success);
+}
+.lhp-stat-warn {
+  border-left-color: var(--lhp-warn);
+}
+.lhp-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.lhp-stat-primary .lhp-stat-icon {
+  background: #eef2ff;
+  color: var(--lhp-primary);
+}
+.lhp-stat-success .lhp-stat-icon {
+  background: #d1fae5;
+  color: var(--lhp-success);
+}
+.lhp-stat-warn .lhp-stat-icon {
+  background: #fef3c7;
+  color: var(--lhp-warn);
+}
+.lhp-stat-purple {
+  border-left-color: var(--lhp-purple);
+}
+.lhp-stat-purple .lhp-stat-icon {
+  background: var(--lhp-purple-lt);
+  color: var(--lhp-purple);
+}
+.lhp-stat-num {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--lhp-dark);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.lhp-stat-lbl {
+  font-size: 11px;
+  color: var(--lhp-mid);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-top: 2px;
+}
+
+/* ── CARD ────────────────────────────────────────────────── */
+.lhp-card {
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  box-shadow: var(--lhp-shadow);
+  padding: 24px;
+  border: 1px solid var(--lhp-border);
+}
+.lhp-card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--lhp-border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.lhp-card-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--lhp-mid);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--lhp-border);
+}
+
+/* ── TABLE ───────────────────────────────────────────────── */
+.lhp-table {
+  font-size: 14px;
+}
+.lhp-table thead th {
+  background: #f9fafb;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--lhp-mid);
+  border-bottom: 1px solid var(--lhp-border) !important;
+  padding: 13px 16px;
+  white-space: nowrap;
+}
+.lhp-table tbody tr {
+  transition: background var(--lhp-transition);
+}
+.lhp-table tbody tr:hover td {
+  background: #f5f3ff;
+}
+.lhp-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6 !important;
+  vertical-align: middle;
+}
+.lhp-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Progress */
+.lhp-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+.lhp-prog {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--lhp-border);
+  overflow: hidden;
+}
+.lhp-prog-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--lhp-primary), #818cf8);
+  transition: width 0.5s ease;
+}
+.lhp-prog-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lhp-mid);
+  min-width: 32px;
+}
+
+/* Badges */
+.lhp-badge-complete {
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.lhp-badge-draft {
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Empty state */
+.lhp-empty-state {
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  box-shadow: var(--lhp-shadow);
+  text-align: center;
+  padding: 80px 32px;
+  border: 1px solid var(--lhp-border);
+}
+.lhp-empty-state .bi {
+  font-size: 56px;
+  color: var(--lhp-primary-md);
+  display: block;
+  margin-bottom: 16px;
+}
+.lhp-empty-state h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MULTI-STEP FORM MODAL
+═══════════════════════════════════════════════════════ */
+.lhp-modal-content {
+  border: none;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--lhp-shadow-lg);
+}
+.lhp-modal-header {
+  background: linear-gradient(135deg, #1e1b4b 0%, var(--lhp-primary) 100%);
+  color: #fff;
+  padding: 22px 28px;
+  border-bottom: none;
+}
+.lhp-modal-header .modal-title {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: white;
+    gap: 2px;
+    display: flex;
+}
+.lhp-modal-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+}
+.lhp-modal-body {
+  padding: 28px 32px;
+}
+.lhp-modal-footer {
+  border-top: 1px solid var(--lhp-border);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafafa;
+}
+
+/* Step bar */
+.lhp-step-bar {
+  display: flex;
+  align-items: center;
+  padding: 20px 28px;
+  background: #fff;
+  border-bottom: 1px solid var(--lhp-border);
+  overflow-x: auto;
+  gap: 0;
+}
+.lhp-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+}
+.lhp-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.25s ease;
+}
+.lhp-step-lbl {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+.lhp-step-connector {
+  flex: 1;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 0 6px;
+  min-width: 24px;
+  margin-bottom: 19px;
+  transition: background 0.25s;
+}
+.lhp-step-item.active .lhp-step-num {
+  background: var(--lhp-primary);
+  color: #fff;
+  border-color: var(--lhp-primary);
+  box-shadow: 0 4px 14px rgba(var(--lhp-primary-rgb), 0.4);
+  transform: scale(1.08);
+}
+.lhp-step-item.active .lhp-step-lbl {
+  color: var(--lhp-primary);
+  font-weight: 700;
+}
+.lhp-step-item.done .lhp-step-num {
+  background: var(--lhp-success);
+  color: #fff;
+  border-color: var(--lhp-success);
+}
+.lhp-step-item.done .lhp-step-lbl {
+  color: var(--lhp-success);
+}
+.lhp-step-item.done + .lhp-step-connector {
+  background: var(--lhp-success);
+}
+
+/* Step content */
+.lhp-modal-step {
+  display: none;
+}
+.lhp-modal-step.active {
+  display: block;
+  animation: lhp-fadein 0.2s ease;
+}
+
+.lhp-step-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--lhp-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--lhp-primary-lt);
+}
+.lhp-step-heading .bi {
+  color: var(--lhp-primary);
+  font-size: 20px;
+}
+
+.lhp-step-progress-text {
+  font-size: 12px;
+  color: var(--lhp-mid);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Choice cards (radio) */
+.lhp-choice-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.lhp-choice-card {
+  cursor: pointer;
+  flex: 1;
+  min-width: 130px;
+}
+.lhp-choice-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.lhp-choice-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border: 2px solid var(--lhp-border);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: all 0.18s;
+  background: var(--lhp-white);
+}
+.lhp-choice-inner .bi {
+  font-size: 18px;
+  color: var(--lhp-mid);
+  transition: color 0.18s;
+}
+.lhp-choice-card:hover .lhp-choice-inner {
+  border-color: var(--lhp-primary-md);
+  background: var(--lhp-primary-lt);
+}
+.lhp-choice-inner.lhp-choice-selected,
+.lhp-choice-card input:checked + .lhp-choice-inner {
+  border-color: var(--lhp-primary);
+  background: var(--lhp-primary-lt);
+  color: var(--lhp-primary);
+  box-shadow: 0 0 0 3px rgba(var(--lhp-primary-rgb), 0.12);
+}
+.lhp-choice-inner.lhp-choice-selected .bi,
+.lhp-choice-card input:checked + .lhp-choice-inner .bi {
+  color: var(--lhp-primary);
+}
+
+/* Invite box */
+.lhp-invite-box {
+  background: var(--lhp-primary-lt);
+  border: 1px solid var(--lhp-primary-md);
+  border-radius: 10px;
+  padding: 18px;
+  margin-top: 24px;
+}
+
+/* Acknowledge */
+.lhp-acknowledge-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.lhp-acknowledge-box:hover {
+  border-color: #fcd34d;
+}
+
+/* Review grid */
+.lhp-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.lhp-review-item {
+  background: var(--lhp-light);
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--lhp-border);
+}
+.lhp-review-item-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--lhp-mid);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.lhp-review-item-value {
+  font-size: 14px;
+  color: var(--lhp-dark);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════
+   REPEATER TABLES
+═══════════════════════════════════════════════════════ */
+.lhp-repeater {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+.lhp-repeater-table {
+  font-size: 13px;
+  min-width: 480px;
+}
+.lhp-repeater-table thead th {
+  background: #f9fafb;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--lhp-mid);
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--lhp-border) !important;
+}
+.lhp-repeater-table tbody td {
+  padding: 5px 5px;
+  vertical-align: top;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+.lhp-repeater-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+.lhp-repeater-table td input,
+.lhp-repeater-table td select,
+.lhp-repeater-table td textarea {
+  width: 100%;
+  font-size: 13px;
+  border: 1.5px solid var(--lhp-border);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-family: var(--lhp-font);
+  background: var(--lhp-white);
+  transition:
+    border-color var(--lhp-transition),
+    box-shadow var(--lhp-transition);
+}
+.lhp-repeater-table td input:focus,
+.lhp-repeater-table td select:focus,
+.lhp-repeater-table td textarea:focus {
+  outline: none;
+  border-color: var(--lhp-primary);
+  box-shadow: 0 0 0 2px rgba(var(--lhp-primary-rgb), 0.12);
+}
+.lhp-repeater-table td input:focus-visible,
+.lhp-repeater-table td select:focus-visible,
+.lhp-repeater-table td textarea:focus-visible {
+  outline: 2px solid var(--lhp-primary);
+  outline-offset: 1px;
+}
+.lhp-repeater-table td input:focus:not(:focus-visible),
+.lhp-repeater-table td select:focus:not(:focus-visible),
+.lhp-repeater-table td textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+.lhp-repeater-table td textarea,
+.lhp-letter-textarea-wrap textarea {
+  overflow: auto;
+  height: auto;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical !important;
+  appearance: auto !important;
+}
+.lhp-letter-td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--lhp-border);
+}
+.lhp-letter-textarea-wrap textarea.form-control {
+  resize: vertical;
+  min-height: unset;
+  overflow-y: auto;
+}
+.lhp-remove-row {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #d1d5db;
+  font-size: 13px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color var(--lhp-transition), background var(--lhp-transition);
+}
+.lhp-remove-row:hover {
+  color: var(--lhp-danger);
+  background: #4f46e5 !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARENT: SECTION CARDS
+═══════════════════════════════════════════════════════ */
+.lhp-section-card {
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  box-shadow: var(--lhp-shadow);
+  padding: 20px 22px;
+  border: 1px solid var(--lhp-border);
+  transition: all var(--lhp-transition);
+  display: flex;
+  flex-direction: column;
+}
+.lhp-section-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--lhp-shadow-md);
+  border-color: var(--lhp-primary-md);
+}
+.lhp-section-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.lhp-section-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--lhp-primary-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.lhp-section-icon-wrap .bi {
+  color: var(--lhp-primary);
+}
+.lhp-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.lhp-section-status-filled {
+  font-size: 10px;
+  color: var(--lhp-success);
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lhp-section-status-empty {
+  font-size: 10px;
+  color: var(--lhp-warn);
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lhp-section-preview {
+  font-size: 12.5px;
+  color: var(--lhp-mid);
+  flex: 1;
+  margin-bottom: 14px;
+  min-height: 18px;
+}
+.lhp-section-card-footer {
+  border-top: 1px solid var(--lhp-border);
+  padding-top: 12px;
+  margin-top: auto;
+}
+
+/* Completion pill */
+.lhp-completion-pill {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  box-shadow: var(--lhp-shadow);
+  padding: 14px 20px;
+  border: 1px solid var(--lhp-border);
+  flex-shrink: 0;
+}
+.lhp-completion-pill-ring {
+  position: relative;
+  width: 54px;
+  height: 54px;
+}
+.lhp-completion-pill-ring svg {
+  width: 54px;
+  height: 54px;
+  transform: rotate(-90deg);
+}
+.lhp-completion-pill-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--lhp-dark);
+}
+
+/* Legal note */
+.lhp-legal-note {
+  font-size: 12px;
+  color: #9ca3af;
+  background: var(--lhp-light);
+  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--lhp-border);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ADMIN PANEL EXTRAS
+═══════════════════════════════════════════════════════ */
+.lhp-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.lhp-activity-item:last-child {
+  border-bottom: none;
+}
+.lhp-activity-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.lhp-act-user_created {
+  background: #d1fae5;
+  color: #065f46;
+}
+.lhp-act-user_deleted {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.lhp-act-user_status {
+  background: #fef3c7;
+  color: #92400e;
+}
+.lhp-act-note_added {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.lhp-act-file_uploaded {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+.lhp-act-default {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.lhp-activity-body {
+  flex: 1;
+  min-width: 0;
+}
+.lhp-activity-msg {
+  font-size: 13px;
+  color: var(--lhp-dark);
+}
+.lhp-activity-meta {
+  font-size: 11px;
+  color: var(--lhp-mid);
+  margin-top: 2px;
+}
+
+.lhp-status-active {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lhp-status-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lhp-role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lhp-role-super {
+  background: #fce7f3;
+  color: #9d174d;
+}
+.lhp-role-firm {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.lhp-role-planner {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.lhp-role-parent {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.lhp-record-tabs .nav-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lhp-mid);
+  transition: color var(--lhp-transition);
+}
+.lhp-record-tabs .nav-link.active {
+  color: var(--lhp-primary);
+}
+
+.lhp-note-item {
+  background: var(--lhp-light);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--lhp-border);
+}
+.lhp-note-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.lhp-note-author {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lhp-dark);
+}
+.lhp-note-date {
+  font-size: 11px;
+  color: var(--lhp-mid);
+}
+.lhp-note-text {
+  font-size: 13px;
+  color: var(--lhp-dark);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.lhp-upload-zone {
+  border: 2px dashed var(--lhp-primary-md);
+  border-radius: 10px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--lhp-transition);
+  background: var(--lhp-primary-lt);
+  margin-top: 8px;
+}
+.lhp-upload-zone:hover,
+.lhp-upload-zone.drag-over,
+.lhp-upload-zone.lhp-upload-zone-hover {
+  border-color: var(--lhp-primary);
+  background: #e0e7ff;
+  box-shadow: 0 0 0 3px rgba(var(--lhp-primary-rgb), 0.12);
+}
+.lhp-upload-zone .bi {
+  font-size: 32px;
+  color: var(--lhp-primary);
+  margin-bottom: 6px;
+  display: block;
+}
+.lhp-upload-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.lhp-upload-progress-track {
+  width: 80%;
+  background: rgba(var(--lhp-primary-rgb), 0.15);
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+.lhp-upload-progress-bar {
+  height: 100%;
+  background: var(--lhp-primary);
+  border-radius: 4px;
+  transition: width 0.15s ease;
+}
+
+.lhp-pending-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fffbeb;
+  border: 1px dashed #d97706;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.lhp-pending-file-item .lhp-pf-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--lhp-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lhp-pending-file-item .lhp-pf-size {
+  color: var(--lhp-mid);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.lhp-pending-file-badge {
+  font-size: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+/* Toast container */
+.lhp-toast-container {
+  pointer-events: none;
+}
+.lhp-toast-container .toast {
+  pointer-events: all;
+  border-radius: 10px !important;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.14) !important;
+  min-width: 280px;
+  max-width: 360px;
+}
+.lhp-toast-container .toast-body {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lhp-dark);
+  padding: 12px 14px;
+  line-height: 1.4;
+}
+.lhp-toast-container .btn-close {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background-color: var(--lhp-primary);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+  background-size: 11px;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: none;
+  opacity: 1;
+  margin-right: 12px !important;
+  margin-left: 0 !important;
+  flex-shrink: 0;
+}
+.lhp-toast-container .btn-close:hover {
+  background-color: var(--lhp-primary-d);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 992px) {
+  .lhp-auth-split {
+    grid-template-columns: 1fr;
+  }
+  .lhp-auth-brand-panel {
+    display: none;
+  }
+  .lhp-auth-form-panel {
+    padding: 40px 24px;
+  }
+  .lhp-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .lhp-auth-center-card {
+    padding: 32px 20px;
+  }
+  .lhp-modal-body {
+    padding: 20px 16px;
+  }
+  .lhp-step-bar {
+    padding: 16px;
+  }
+  .lhp-step-lbl {
+    display: none;
+  }
+  .lhp-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lhp-choice-card {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* ── PERFORMANCE ─────────────────────────────────────── */
+.lhp-sidebar {
+  will-change: transform;
+}
+.lhp-section-card {
+  will-change: transform, box-shadow;
+}
+.lhp-stat-card {
+  will-change: transform, box-shadow;
+}
+.lhp-prog-fill {
+  will-change: width;
+}
+#header-arc,
+#sidebar-arc {
+  will-change: stroke-dasharray;
+}
+.lhp-completion-pill-ring svg path {
+  will-change: stroke-dasharray;
+}
+
+/* ── LOADING SKELETONS ─────────────────────────────── */
+@keyframes lhp-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.lhp-skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 800px 100%;
+  animation: lhp-shimmer 1.5s infinite ease-in-out;
+  border-radius: 6px;
+  display: inline-block;
+  line-height: 1;
+}
+.lhp-skeleton-text { height: 14px; width: 100%; margin-bottom: 8px; }
+.lhp-skeleton-title { height: 20px; width: 60%; margin-bottom: 12px; }
+.lhp-skeleton-card { height: 100px; width: 100%; margin-bottom: 12px; }
+
+/* ── SMOOTH TRANSITIONS ────────────────────────────── */
+.lhp-view,
+.lhp-section-card,
+.lhp-card,
+.lhp-stat-card,
+.lhp-sidebar,
+.lhp-topbar {
+  transition: opacity .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.lhp-nav-item {
+  transition: background .15s ease, color .15s ease, padding .15s ease;
+}
+.lhp-modal-content {
+  will-change: transform, opacity;
+}
+.lhp-root .btn {
+  will-change: transform, box-shadow;
+}
+/* Prevent layout shifts on table load */
+.lhp-table tbody {
+  min-height: 60px;
+}
+/* Smooth spinner */
+.lhp-root .spinner-border {
+  animation-duration: 0.65s;
+}
+
+/* ── BUTTON CONSISTENCY ──────────────────────────────────
+   Unify Bootstrap btn-outline-primary with our custom style
+   inside the lhp-root context so no conflicts with theme     */
+.lhp-root .btn-outline-primary {
+  color: var(--lhp-primary) !important;
+  background: transparent !important;
+  border: 2px solid var(--lhp-primary);
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all var(--lhp-transition);
+}
+.lhp-root .btn-outline-primary:hover,
+.lhp-root .btn-outline-primary:focus {
+  background: var(--lhp-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(var(--lhp-primary-rgb), 0.32);
+  transform: translateY(-1px);
+}
+/* Section card edit buttons — always consistent outline */
+.lhp-section-card-footer .btn-outline-primary {
+  width: 100%;
+  justify-content: center;
+}
+.lhp-section-card-footer .lhp-btn-primary-solid {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Alert inner message span */
+.alert .lhp-alert-msg {
+  flex: 1;
+}
+
+/* ── RECORD DETAIL MODAL — full data view ───────────────── */
+.lhp-rd-section {
+  margin-bottom: 24px;
+  border: 1px solid var(--lhp-border);
+  border-radius: var(--lhp-r);
+  overflow: hidden;
+}
+.lhp-rd-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--lhp-light);
+  border-left: 4px solid var(--lhp-primary);
+  font-size: 14px;
+}
+.lhp-rd-section-body {
+  padding: 16px;
+}
+
+.lhp-rd-field {
+  margin-bottom: 4px;
+}
+.lhp-rd-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--lhp-mid);
+  margin-bottom: 4px;
+}
+.lhp-rd-label .bi {
+  font-size: 12px;
+  color: var(--lhp-primary);
+}
+.lhp-rd-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lhp-dark);
+  line-height: 1.5;
+}
+
+.lhp-rd-table {
+  font-size: 13px;
+}
+.lhp-rd-table thead th {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--lhp-mid);
+  background: var(--lhp-light);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--lhp-border) !important;
+}
+.lhp-rd-table tbody td {
+  padding: 9px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6 !important;
+  color: var(--lhp-dark);
+}
+.lhp-rd-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+.lhp-rd-table tbody tr:hover td {
+  background: #fafbff;
+}
+
+/* Letters */
+.lhp-letter-item {
+  border: 1px solid var(--lhp-border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: var(--lhp-white);
+}
+.lhp-letter-to {
+  font-size: 12px;
+  color: var(--lhp-mid);
+  margin-bottom: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.lhp-letter-from {
+  font-weight: 400;
+}
+.lhp-letter-body {
+  font-size: 13px;
+  color: var(--lhp-dark);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  background: var(--lhp-light);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLIENT CARDS
+═══════════════════════════════════════════════════════ */
+.lhp-client-card {
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  box-shadow: var(--lhp-shadow);
+  padding: 20px;
+  border: 1px solid var(--lhp-border);
+  transition: all var(--lhp-transition);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lhp-client-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lhp-shadow-md);
+  border-color: var(--lhp-primary-md);
+}
+.lhp-client-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lhp-client-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--lhp-mid);
+  flex-wrap: wrap;
+}
+.lhp-client-meta span {
+  display: flex;
+  align-items: center;
+}
+.lhp-client-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.lhp-avatar-md {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--lhp-primary), #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RECORD CARDS (parent multi-record list)
+═══════════════════════════════════════════════════════ */
+.lhp-record-card {
+  background: var(--lhp-white);
+  border-radius: var(--lhp-r-lg);
+  box-shadow: var(--lhp-shadow);
+  padding: 20px;
+  border: 1px solid var(--lhp-border);
+  transition: all var(--lhp-transition);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lhp-record-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lhp-shadow-md);
+  border-color: var(--lhp-primary-md);
+}
+.lhp-record-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.lhp-record-ring-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DELEGATED ACCESS ITEMS
+═══════════════════════════════════════════════════════ */
+.lhp-delegated-item {
+  background: var(--lhp-white);
+  border: 1px solid var(--lhp-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: border-color var(--lhp-transition);
+}
+.lhp-delegated-item:hover {
+  border-color: var(--lhp-primary-md);
+}
+
+.lhp-del-add-form {
+  background: var(--lhp-light) !important;
+}
+
+.lhp-avatar-sm-del {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* Condition type badge colours */
+.badge.bg-success-subtle {
+  background: #d1fae5 !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TABBED CARD (planner dashboard)
+═══════════════════════════════════════════════════════ */
+.lhp-tabs-header {
+  display: flex;
+  gap: 15px;
+  border-bottom: 2px solid var(--lhp-border);
+  padding: 0 4px;
+  background: #f9fafb;
+  border-radius: var(--lhp-r-lg) var(--lhp-r-lg) 0 0;
+}
+.lhp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lhp-mid);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: -2px;
+  border-radius: 0;
+  font-family: var(--lhp-font);
+}
+.lhp-tab:hover {
+  color: var(--lhp-primary);
+  background: rgba(var(--lhp-primary-rgb), 0.04);
+}
+.lhp-tab.active {
+  color: var(--lhp-primary);
+  border-bottom-color: var(--lhp-primary);
+}
+.lhp-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--lhp-border);
+  color: var(--lhp-mid);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.18s;
+}
+.lhp-tab.active .lhp-tab-badge {
+  background: var(--lhp-primary-lt);
+  color: var(--lhp-primary);
+}
+
+.lhp-tab-pane {
+  display: none;
+}
+.lhp-tab-pane.active {
+  display: block;
+  animation: lhp-fadein 0.2s ease;
+}
+
+.lhp-tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--lhp-border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lhp-tab-empty {
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--lhp-mid);
+}
+
+/* Client detail expansion panel (inside card) */
+.lhp-client-detail-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--lhp-primary-lt);
+  border-top: 1px solid var(--lhp-primary-md);
+  border-bottom: 1px solid var(--lhp-primary-md);
+  gap: 12px;
+  flex-wrap: wrap;
+  animation: lhp-fadein 0.2s ease;
+}
+
+/* Row highlight for currently open client */
+.lhp-table tbody tr.lhp-row-active td {
+  background: #f5f3ff !important;
+}
+
+/* ── DEMO CREDENTIALS CARD ───────────────────────────── */
+.lhp-creds-card {
+  background: var(--lhp-light);
+  border-radius: 10px;
+  padding: 16px;
+}
+.lhp-creds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.lhp-cred-item {
+  background: var(--lhp-white);
+  border: 1px solid var(--lhp-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.lhp-cred-role {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--lhp-primary);
+  margin-bottom: 4px;
+}
+.lhp-cred-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.lhp-cred-line {
+  font-size: 12px;
+  color: var(--lhp-mid);
+  margin-bottom: 3px;
+}
+.lhp-cred-line code {
+  font-size: 12px;
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.lhp-cred-note {
+  font-size: 11px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCTION POLISH — v1.3
+═══════════════════════════════════════════════════════ */
+
+/* Fix Bootstrap modal backdrop z-index conflict with Elementor */
+.lhp-root .modal-backdrop {
+  z-index: 9998;
+}
+.lhp-root .modal {
+  z-index: 9999;
+}
+
+/* Ensure modals render above everything on portal pages */
+#lhp-client-modal,
+#lhp-form-modal,
+#lhp-confirm-modal,
+#lhp-invite-modal,
+#lhp-record-detail-modal,
+#lhp-section-modal,
+#lhp-new-record-modal {
+  z-index: 10000;
+}
+
+/* Fix tab active state bottom border alignment */
+.lhp-tab.active {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fix client detail panel animation */
+#client-detail-panel {
+  overflow: hidden;
+}
+
+/* Inline confirm strip */
+.lhp-inline-confirm {
+  border-radius: 8px;
+  font-size: 14px;
+  animation: lhp-fadein 0.2s ease;
+}
+
+/* Make form-control inside modals not fight Bootstrap defaults */
+.lhp-root .modal .form-control:focus,
+.lhp-root .modal .form-select:focus {
+  box-shadow: 0 0 0 3px rgba(var(--lhp-primary-rgb), 0.15) !important;
+  border-color: var(--lhp-primary) !important;
+}
+
+/* Fix repeater table overflow in modals */
+.lhp-root .modal .lhp-repeater {
+  overflow-x: auto;
+}
+
+/* Section modal — wider on all breakpoints */
+#lhp-section-modal .modal-dialog {
+  max-width: min(92vw, 1000px);
+}
+@media (max-width: 767px) {
+  #lhp-section-modal .modal-dialog {
+    max-width: 96vw;
+    margin: 8px auto;
+  }
+}
+
+/* Fix step bar scrollbar appearance on mobile */
+.lhp-step-bar::-webkit-scrollbar {
+  height: 3px;
+}
+.lhp-step-bar::-webkit-scrollbar-thumb {
+  background: var(--lhp-primary-md);
+  border-radius: 2px;
+}
+
+/* Toast z-index above modals */
+.lhp-toast-container {
+  z-index: 11000 !important;
+}
+
+/* Client notes preview in table */
+.lhp-client-notes-tip {
+  display: inline-block;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--lhp-mid);
+  vertical-align: middle;
+}
+
+/* Empty state inside tbody */
+.lhp-tab-empty-inline {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+/* Spinner alignment fix */
+.lhp-root .spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* ═══════════════════════════════════════════════════════
+   THEME ISOLATION
+   Full override of every Bootstrap component used in the
+   plugin so OceanWP, Hello Elementor, Astra, GeneratePress
+   and any other theme cannot break the portal UI.
+═══════════════════════════════════════════════════════ */
+
+/* ── Reset: headings, paragraphs, lists, links ───────── */
+.lhp-root h1,
+.lhp-root h2,
+.lhp-root h3,
+.lhp-root h4,
+.lhp-root h5,
+.lhp-root h6 {
+  font-family: var(--lhp-font) !important;
+  line-height: 1.3;
+  margin-top: 0;
+  font-weight: inherit;
+}
+.lhp-root p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.lhp-root ul,
+.lhp-root ol {
+  list-style: none !important;
+  margin: 0;
+  padding: 0;
+}
+.lhp-root a,
+.lhp-root a:hover,
+.lhp-root a:focus,
+.lhp-root a:visited {
+  text-decoration: none;
+}
+.lhp-root small,
+.lhp-root .small {
+  font-size: 85%;
+  font-family: var(--lhp-font);
+}
+
+/* ── Text utilities (OceanWP / Avada override guard) ─── */
+.lhp-root .text-muted {
+  color: var(--lhp-mid) !important;
+}
+.lhp-root .text-primary {
+  color: var(--lhp-primary) !important;
+}
+.lhp-root .text-white {
+  color: #fff !important;
+}
+.lhp-root .text-white-50 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.lhp-root .text-danger {
+  color: var(--lhp-danger) !important;
+}
+.lhp-root .text-success {
+  color: var(--lhp-success) !important;
+}
+.lhp-root .fw-semibold {
+  font-weight: 600 !important;
+}
+.lhp-root .fw-bold {
+  font-weight: 700 !important;
+}
+
+/* ── All .btn inside lhp-root ────────────────────────── */
+.lhp-root button,
+.lhp-root .btn {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-family: var(--lhp-font) !important;
+  border-radius: 8px !important;
+  line-height: 1.5 !important;
+  justify-content: center;
+}
+/* EP welcome page tab switcher — specificity (0,2,1) beats global .lhp-root button (0,1,1) */
+.lhp-root button.lhp-ep-tab {
+  color: #475569 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.lhp-root button.lhp-ep-tab.lhp-ep-tab-active {
+  color: #fff !important;
+  background: var(--lhp-primary, #4f46e5) !important;
+  box-shadow: 0 2px 8px rgba(var(--lhp-primary-rgb),.3) !important;
+}
+.lhp-modal-header .btn-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15);
+  opacity: 1;
+  filter: invert(1) grayscale(100%) brightness(200%);
+  transition: background-color 0.15s;
+  flex-shrink: 0;
+}
+.lhp-modal-header .btn-close:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+/* ── Alert components ────────────────────────────────── */
+.lhp-root .alert {
+  border: none !important;
+  border-radius: 8px !important;
+  font-family: var(--lhp-font) !important;
+  font-size: 13.5px;
+  padding: 10px 14px;
+  line-height: 1.5;
+}
+.lhp-root .alert-danger {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  border-left: 3px solid var(--lhp-danger) !important;
+}
+.lhp-root .alert-success {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+  border-left: 3px solid var(--lhp-success) !important;
+}
+.lhp-root .alert-warning {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-left: 3px solid var(--lhp-warn) !important;
+}
+.lhp-root .alert-info {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-left: 3px solid #3b82f6 !important;
+}
+
+/* ── Badge ───────────────────────────────────────────── */
+.lhp-root .badge {
+  font-family: var(--lhp-font) !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 20px;
+}
+.lhp-root .badge.bg-success-subtle {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+/* Admin role badge (replaces .badge.bg-danger.fs-6) */
+.lhp-admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--lhp-danger);
+  color: #fff;
+  font-family: var(--lhp-font);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  line-height: 1.4;
+  align-self: flex-start;
+}
+
+/* ── Spinner ─────────────────────────────────────────── */
+.lhp-root .spinner-border.text-primary {
+  color: var(--lhp-primary) !important;
+  border-right-color: transparent;
+}
+
+/* ── Form-check (checkbox / radio) ──────────────────── */
+.lhp-root .form-check-input {
+  border: 1.5px solid var(--lhp-border);
+  background-color: var(--lhp-white);
+  width: 1rem;
+  height: 1rem;
+}
+.lhp-root .form-check-input:checked {
+  background-color: var(--lhp-primary) !important;
+  border-color: var(--lhp-primary) !important;
+}
+.lhp-root .form-check-input:focus {
+  box-shadow: 0 0 0 3px rgba(var(--lhp-primary-rgb), 0.15) !important;
+  border-color: var(--lhp-primary) !important;
+}
+
+/* ── Contact sub-label (Email / Phone inside merged cell) */
+.lhp-contact-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+/* ── Prefer-not-to-include optout toggle ─────────────── */
+/* Label = toggle container */
+.lhp-optout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+  white-space: nowrap;
+  position: relative;
+  padding-left: 36px; /* space for the toggle track */
+}
+/* Track */
+.lhp-optout::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 17px;
+  border-radius: 999px;
+  background: #d1d5db;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+/* Knob */
+.lhp-optout::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  transition: left 0.2s;
+}
+/* Checked states — via :has() (modern) + .is-checked class (JS fallback) */
+.lhp-optout:has(.lhp-optout-chk:checked)::before,
+.lhp-optout.is-checked::before {
+  background: var(--lhp-primary);
+}
+.lhp-optout:has(.lhp-optout-chk:checked)::after,
+.lhp-optout.is-checked::after {
+  left: 15px;
+}
+/* Completely hide native checkbox — no appearance tricks needed */
+.lhp-optout-chk {
+  position: absolute;
+  opacity: 0;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ── Table ───────────────────────────────────────────── */
+.lhp-root .table {
+  color: var(--lhp-dark) !important;
+  font-family: var(--lhp-font) !important;
+  border-color: var(--lhp-border);
+}
+.lhp-root .table > :not(caption) > * > * {
+  background-color: transparent;
+  color: var(--lhp-dark);
+  border-bottom-color: var(--lhp-border);
+}
+
+/* ── Nav-link (record detail tabs) ──────────────────── */
+.lhp-root .nav-link {
+  color: var(--lhp-mid) !important;
+  font-family: var(--lhp-font) !important;
+  text-decoration: none !important;
+}
+.lhp-root .nav-link:hover {
+  color: var(--lhp-primary) !important;
+}
+.lhp-root .nav-link.active {
+  color: var(--lhp-primary) !important;
+}
+
+/* ── Completion pill size helpers ────────────────────── */
+.lhp-completion-pill .lhp-pill-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--lhp-dark);
+}
+.lhp-completion-pill .lhp-pill-sub {
+  font-size: 12px;
+  color: var(--lhp-mid);
+}
+
+/* ── OceanWP: forces border-radius on all inputs to 0 ── */
+.lhp-root input[type="text"],
+.lhp-root input[type="email"],
+.lhp-root input[type="tel"],
+.lhp-root input[type="password"],
+.lhp-root input[type="date"],
+.lhp-root input[type="search"],
+.lhp-root select,
+.lhp-root textarea {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  box-sizing: border-box !important;
+  font-family: var(--lhp-font) !important;
+  border-radius: 8px !important;
+  background-color: var(--lhp-white) !important;
+  color: var(--lhp-dark) !important;
+  box-shadow: none;
+}
+.lhp-root select {
+  height: 44px !important;
+  min-height: 44px !important;
+  line-height: 1.5 !important;
+  overflow: visible !important;
+}
+/* OceanWP / Elementor: suppress native outline only on styled inputs (.form-control already has box-shadow focus ring) */
+.lhp-root input.form-control:focus,
+.lhp-root select.form-control:focus,
+.lhp-root textarea.form-control:focus {
+  outline: none !important;
+}
+/* Hello Elementor sets all links to the accent color */
+.lhp-root .lhp-nav-item,
+.lhp-root .lhp-nav-item:hover,
+.lhp-root .lhp-nav-item:focus,
+.lhp-root .lhp-nav-item:visited {
+  text-decoration: none !important;
+}
+/* Astra / GeneratePress add padding to ul > li */
+.lhp-root .lhp-sidebar-nav li,
+.lhp-root .lhp-brand-features li {
+  list-style: none !important;
+  margin: 0;
+  padding: 0;
+}
+/* Astra sets font-size on body/p that inherits into portal */
+.lhp-root .lhp-page-title {
+  font-size: 26px !important;
+}
+.lhp-root .lhp-page-sub {
+  font-size: 14px !important;
+}
+.lhp-root .form-label {
+  font-size: 13px !important;
+}
+.lhp-brand-headline{
+  color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   COLOR VISIBILITY FIXES
+   Overrides theme CSS that bleeds into the portal and
+   makes button text / labels invisible.
+═══════════════════════════════════════════════════════ */
+
+/* ── All labels inside the portal — force dark text on light bg ── */
+.lhp-root label,
+.lhp-root .form-label {
+  color: var(--lhp-dark-3) !important;
+  background-color: transparent !important;
+  font-weight: 600;
+}
+
+/* ── Sidebar labels on glass ── */
+.lhp-sidebar label,
+.lhp-sidebar .form-label {
+  color: rgba(255, 255, 255, 0.75) !important;
+  background-color: transparent !important;
+}
+.lhp-sidebar .lhp-sidebar-nav-label {
+  color: rgba(255, 255, 255, 0.50) !important;
+  background-color: transparent !important;
+}
+
+/* ── Primary solid button — always white text ── */
+.lhp-root .lhp-btn-primary-solid,
+.lhp-root .lhp-btn-primary-solid:link,
+.lhp-root .lhp-btn-primary-solid:visited,
+.lhp-root .lhp-btn-primary-solid:hover,
+.lhp-root .lhp-btn-primary-solid:focus,
+.lhp-root .lhp-btn-primary-solid:active {
+  color: #ffffff !important;
+}
+
+/* ── Outline danger button ── */
+.lhp-root .btn-outline-danger {
+  color: var(--lhp-danger) !important;
+}
+.lhp-root .btn-outline-danger:hover {
+  color: #ffffff !important;
+}
+
+/* ── Secondary outline (password toggle, etc.) ── */
+.lhp-root .btn-outline-secondary,
+.lhp-root .lhp-toggle-pass {
+  color: var(--lhp-mid) !important;
+  background-color: var(--lhp-white) !important;
+}
+.lhp-root .btn-outline-secondary:hover,
+.lhp-root .lhp-toggle-pass:hover {
+  color: var(--lhp-dark) !important;
+  background-color: var(--lhp-light) !important;
+}
+
+/* ── Link buttons ── */
+.lhp-root .btn-link,
+.lhp-root .lhp-link {
+  color: var(--lhp-primary) !important;
+}
+.lhp-root .btn-link:hover,
+.lhp-root .lhp-link:hover {
+  color: var(--lhp-primary-d) !important;
+}
+
+/* ── Input group icon text ── */
+.lhp-root .input-group-text {
+  color: var(--lhp-mid) !important;
+  background-color: var(--lhp-light) !important;
+}
+
+/* ── Nav item text in sidebar ── */
+.lhp-root .lhp-nav-item {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.lhp-root .lhp-nav-item:hover {
+  color: #ffffff !important;
+}
+.lhp-root .lhp-nav-item.active {
+  color: #ffffff !important;
+}
+
+/* ── Auth page form header text (on white background) ── */
+.lhp-auth-form-panel h2,
+.lhp-auth-form-panel h3,
+.lhp-auth-form-panel p {
+  color: var(--lhp-dark) !important;
+}
+.lhp-auth-form-panel .text-muted {
+  color: var(--lhp-mid) !important;
+}
+
+/* ── Page titles and subtitles ── */
+.lhp-root .lhp-page-title {
+  color: var(--lhp-dark) !important;
+}
+.lhp-root .lhp-page-sub {
+  color: var(--lhp-mid) !important;
+}
+
+/* ── Card text ── */
+.lhp-root .lhp-card h1,
+.lhp-root .lhp-card h2,
+.lhp-root .lhp-card h3,
+.lhp-root .lhp-card h4,
+.lhp-root .lhp-card p {
+  color: var(--lhp-dark) !important;
+}
+
+/* ── Stat card numbers and labels ── */
+.lhp-root .lhp-stat-num {
+  color: var(--lhp-dark) !important;
+}
+.lhp-root .lhp-stat-lbl {
+  color: var(--lhp-mid) !important;
+}
+
+/* ── Table cell text ── */
+.lhp-root .lhp-table tbody td,
+.lhp-root .lhp-table thead th {
+  color: var(--lhp-dark) !important;
+}
+
+/* ── Section cards ── */
+.lhp-root .lhp-section-title {
+  color: var(--lhp-dark) !important;
+}
+.lhp-root .lhp-section-preview {
+  color: var(--lhp-mid) !important;
+}
+
+/* ── Owner cards (Bank Accounts section) ── */
+.lhp-owner-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 600px) {
+  .lhp-owner-cards { grid-template-columns: 1fr; }
+}
+.lhp-owner-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #f8fafc;
+}
+.lhp-owner-card-optional {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+.lhp-owner-card-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--lhp-primary, #4f46e5);
+  margin-bottom: 4px;
+}
+
+/* ── File list items ── */
+.lhp-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--lhp-border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: var(--lhp-white);
+  transition: border-color var(--lhp-transition);
+}
+.lhp-file-item:hover { border-color: var(--lhp-primary-md); }
+.lhp-file-icon { font-size: 22px; flex-shrink: 0; }
+.lhp-file-name { font-weight: 600; font-size: 13px; color: var(--lhp-dark); }
+.lhp-file-meta { font-size: 11px; color: var(--lhp-mid); }
+.lhp-file-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* ── REDUCED MOTION ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lhp-root *,
+  .lhp-root *::before,
+  .lhp-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .lhp-section-card:hover,
+  .lhp-client-card:hover,
+  .lhp-record-card:hover,
+  .lhp-btn-primary-solid:hover,
+  .lhp-btn-outline-primary:hover,
+  .lhp-root .btn-outline-danger:hover,
+  .lhp-root .btn-outline-secondary:hover {
+    transform: none !important;
+  }
+  .lhp-prog-fill,
+  .lhp-pass-strength-fill {
+    transition: none !important;
+  }
+  .lhp-skeleton {
+    animation: none !important;
+    background: #e2e8f0 !important;
+  }
+}
