@@ -4,12 +4,32 @@ Tags: estate planner, lighthouse, family portal, will, legacy
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.9.1
 License: GPLv2 or later
 
 Role-based frontend portal for Estate Planners and families.
 
 == Changelog ==
+
+= 1.9.1 - 2026-06-01 =
+* Fixed: `btn-outline-primary` dark background bleed from Bootstrap CSS variable — added `background: transparent !important` to `.lhp-root .btn-outline-primary`; removed conflicting duplicate color block
+* Fixed: Section card "Edit" button was outline style while "Add Info" was solid — all section cards now use `lhp-btn-primary-solid` for visual consistency
+* Fixed: Logo container `border-radius: 50%` clipped rectangular firm logos to ellipse — changed to `10px` rounded rectangle
+* Fixed: Sidebar name/firm not updating after Save Profile — wrong `.fw-bold` selector (template uses `.fw-semibold`); firm now targets `.lhp-sidebar-firm` directly, creates/removes element as needed
+* Fixed: Profile logo preview blank on page load — `loadEPProfile()` now reads `logo_url` from API and restores preview box + sidebar avatar without re-upload
+* Fixed: Theme header overlapping auth cards on `/lhp-login` and `/lhp-register` — JS measures all fixed/sticky elements and applies their height as `paddingTop` on `.lhp-auth-center-wrap`; re-fires on resize
+* Fixed: Modal closing mid-upload on fixed `1800ms` timer — now closes inside upload callback when files pending, preventing premature dismiss
+* Fixed: Toast XSS — `msg` now passed through `esc()` before inserting into DOM
+* Added: Sidebar avatar (`lhp-avatar-lg`) shows user's first name instead of single initial when no logo uploaded; all 4 dashboards updated (planner, parent, admin, delegated)
+* Added: `logo_url` field to `lhp_get_ep_profile` AJAX response so frontend can restore logo without re-upload
+* Added: `lhp-auth-page` body class on login/register pages for JS header-offset targeting
+* Added: Explicit "From:" label on letters and "For:" / "From:" labels on file attachments in delegated read-only view — previously displayed as unlabelled `·` separator
+* Added: `:focus-visible` CSS rules on form controls and repeater inputs — keyboard users get outline, mouse users don't
+* Added: `.lhp-step-item.done + .lhp-step-connector` — step connector line fills green when step is complete
+* Added: `@media (prefers-reduced-motion: reduce)` block — disables all animations/transitions/transforms for accessibility
+* Added: `for` attributes on all missing form labels across planner, parent, admin, and delegated dashboard templates
+* Changed: Empty state copy corrected — "Click 'Generate New Link'" → "Click 'Invite Specific Client'"
+* Changed: Logo container `max-height` increased 52px → 64px for better sidebar visibility
 
 = 1.4.1 - 2026-05-15 =
 * Fixed: Broken multi-line CSS comment — orphaned `*/` was killing entire stylesheet after line 357, breaking all `.lhp-auth-split` styles (width, border-radius, box-shadow, display: grid)
