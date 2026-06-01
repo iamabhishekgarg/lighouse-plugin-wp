@@ -1626,6 +1626,7 @@
     var html = buildRowHtml(table, d || {});
     if (!bodyId || !html) return;
     var $row = $(html);
+    $("#" + bodyId).append($row);
     if (d) {
       Object.keys(d).forEach(function (k) {
         if (d[k] === '__optout__') {
@@ -1633,7 +1634,6 @@
         }
       });
     }
-    $("#" + bodyId).append($row);
   }
 
   /* ═══════════════════════════════════════════════════════
