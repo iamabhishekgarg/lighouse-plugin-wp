@@ -81,6 +81,7 @@
     </table>
     <button class="btn btn-sm btn-outline-primary lhp-add-row mt-2" data-table="access"><i class="bi bi-plus-circle me-1"></i>Add Person</button>
   </div>
+  <div id="ms-3-pending-panel" style="display:none"></div>
 </div>
 
 <!-- Step 4: Personal Items & Burial -->

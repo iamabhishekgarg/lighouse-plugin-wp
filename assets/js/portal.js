@@ -1196,6 +1196,27 @@
       delegatedEntries = [];
     }
     renderDelegatedList();
+
+    // Render pending access_people activation panel in Step 3 for planner
+    renderPendingAccessPanel(data.access_people || [], data.id || parseInt($("#lhp-record-id").val()) || 0);
+  }
+
+  function renderPendingAccessPanel(accessPeople, recordId) {
+    var pending = accessPeople.filter(function(p) {
+      return p.privilege === 'view_after_death' && p.status !== 'active' && p.user_id;
+    });
+    var $panel = $("#ms-3-pending-panel");
+    if (!pending.length) { $panel.hide().html(''); return; }
+    var html = '<div class="alert alert-warning mt-3" role="alert">' +
+      '<div class="fw-semibold mb-2"><i class="bi bi-hourglass-split me-2"></i>Pending death verification — ' + pending.length + ' person' + (pending.length > 1 ? 's' : '') + '</div>' +
+      '<p class="small mb-2">These people were added with "view after death" privilege. Upload a death certificate to activate their access:</p>' +
+      '<div class="d-flex flex-wrap gap-2">' +
+      pending.map(function(p) {
+        return '<button class="btn btn-sm btn-warning acc-activate-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(recordId)) + '">' +
+          '<i class="bi bi-file-earmark-medical me-1"></i>Activate: ' + esc(p.full_name || p.name || p.email) + '</button>';
+      }).join('') +
+      '</div></div>';
+    $panel.html(html).show();
   }
 
   function updateStep() {
@@ -3421,23 +3442,7 @@
       view_anytime: 'May view interior at any time',
       view_after_death: 'May view interior after I (we) pass away',
     };
-    var pendingDeath = (d.access_people || []).filter(function(a) {
-      return a.privilege === 'view_after_death' && a.status !== 'active' && a.user_id;
-    });
-    var pendingBanner = pendingDeath.length
-      ? '<div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">' +
-        '<i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>' +
-        '<div><strong>' + pendingDeath.length + ' person' + (pendingDeath.length > 1 ? 's' : '') +
-        ' pending death verification.</strong> Activate their access by uploading a death certificate below.' +
-        '<div class="mt-2 d-flex flex-wrap gap-2">' +
-        pendingDeath.map(function(a) {
-          return '<button class="btn btn-sm btn-warning acc-activate-btn" data-id="' + esc(a.id || '') + '" data-rid="' + esc(String(d.id || 0)) + '">' +
-            '<i class="bi bi-file-earmark-medical me-1"></i>Activate ' + esc(a.full_name || a.name || 'Person') + '</button>';
-        }).join('') +
-        '</div></div></div>'
-      : '';
-    var accessBlock = pendingBanner +
-      table(
+    var accessBlock = table(
         ["Name", "Privilege", "Status", "Email", "Phone"],
         (d.access_people || []).map(function (a) {
           var statusBadge = a.status === 'active'
