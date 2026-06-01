@@ -504,7 +504,7 @@ class LH_Ajax
       if (in_array($sec, ['children', 'access_people']) && is_array($val)) {
         foreach ($val as $row) {
           $row_email = trim($row['email'] ?? '');
-          if ($row_email && !is_email($row_email))
+          if ($row_email && $row_email !== '__optout__' && !is_email($row_email))
             wp_send_json_error('Invalid email in ' . str_replace('_', ' ', $sec) . '.');
         }
       }
