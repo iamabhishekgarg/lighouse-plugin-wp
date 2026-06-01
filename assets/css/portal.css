@@ -132,6 +132,12 @@
   align-items: center;
   gap: 6px;
 }
+/* btn-sm size override for lhp-btn-primary-solid */
+.lhp-root .btn-sm.lhp-btn-primary-solid,
+.btn-sm.lhp-btn-primary-solid {
+  padding: 6px 14px !important;
+  font-size: 13px;
+}
 .lhp-btn-saving {
   pointer-events: none !important;
   opacity: 0.85 !important;
@@ -271,7 +277,9 @@
 }
 .lhp-root .form-control[readonly] {
   background-color: var(--lhp-light) !important;
-  cursor: default;
+  cursor: not-allowed;
+  color: var(--lhp-mid);
+  border-color: var(--lhp-border) !important;
 }
 .lhp-root .form-label {
   font-size: 13px;
@@ -813,7 +821,7 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
@@ -1367,8 +1375,18 @@
 }
 .lhp-choice-card input[type="radio"] {
   position: absolute;
+  width: 1px;
+  height: 1px;
   opacity: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
   pointer-events: none;
+}
+/* Show focus ring on card when radio is keyboard-focused */
+.lhp-choice-card input[type="radio"]:focus-visible + .lhp-choice-inner {
+  outline: 2px solid var(--lhp-primary);
+  outline-offset: 2px;
 }
 .lhp-choice-inner {
   display: flex;
@@ -3065,6 +3083,51 @@
 .lhp-file-name { font-weight: 600; font-size: 13px; color: var(--lhp-dark); }
 .lhp-file-meta { font-size: 11px; color: var(--lhp-mid); }
 .lhp-file-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* ── REPEATER TABLE MOBILE ───────────────────────────────── */
+@media (max-width: 600px) {
+  .lhp-repeater {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    border: 1px solid var(--lhp-border);
+  }
+  /* Scroll hint */
+  .lhp-repeater::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg, var(--lhp-primary), transparent);
+    border-radius: 0 0 8px 8px;
+  }
+  .lhp-repeater-table {
+    min-width: 520px;
+  }
+  .lhp-repeater-table thead th {
+    font-size: 9px;
+    padding: 7px 6px;
+  }
+  .lhp-repeater-table tbody td {
+    padding: 4px 4px;
+  }
+  .lhp-repeater-table td input,
+  .lhp-repeater-table td select {
+    font-size: 12px;
+    padding: 5px 7px;
+  }
+  /* Modal body gets more room */
+  .lhp-modal-body {
+    padding: 14px 12px !important;
+  }
+  /* Review grid collapses to 1-col */
+  .lhp-review-grid {
+    grid-template-columns: 1fr;
+  }
+  /* Step bar shrinks labels further */
+  .lhp-step-label {
+    display: none;
+  }
+}
 
 /* ── REDUCED MOTION ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

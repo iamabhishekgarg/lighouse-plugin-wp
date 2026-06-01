@@ -19,7 +19,7 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
         <i class="bi bi-house-heart-fill lhp-brand-icon-sm"></i>
         <span>Family Lighthouse</span>
       </div>
-      <button class="lhp-sidebar-toggle d-xl-none" id="lhp-sidebar-close"><i class="bi bi-x-lg"></i></button>
+      <button class="lhp-sidebar-toggle d-xl-none" id="lhp-sidebar-close" aria-label="Close sidebar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>
 
     <div class="lhp-sidebar-user">
@@ -185,8 +185,8 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
           <label class="form-label fw-semibold" for="ep-link-email">Client Email *</label>
           <input type="email" class="form-control" id="ep-link-email" placeholder="client@email.com">
         </div>
-        <div class="alert alert-danger d-none" id="ep-link-error"></div>
-        <div class="alert alert-success d-none" id="ep-link-success"></div>
+        <div class="alert alert-danger d-none" id="ep-link-error" role="alert" aria-live="assertive"></div>
+        <div class="alert alert-success d-none" id="ep-link-success" role="status" aria-live="polite"></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -225,7 +225,7 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
             <div class="d-flex align-items-center gap-2 p-2 border rounded">
               <i class="bi bi-file-earmark-check text-success"></i>
               <span id="dv-file-name" class="small fw-semibold text-truncate flex-grow-1"></span>
-              <button type="button" class="btn btn-sm btn-link text-danger p-0" id="dv-file-clear"><i class="bi bi-x-lg"></i></button>
+              <button type="button" class="btn btn-sm btn-link text-danger p-0" id="dv-file-clear" aria-label="Remove file"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
           </div>
           <div class="text-danger small mt-1 d-none" id="dv-file-error">Please attach a verification document before activating.</div>

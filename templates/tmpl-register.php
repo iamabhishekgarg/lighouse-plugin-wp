@@ -142,7 +142,7 @@
           <label class="form-label fw-semibold" for="par-name">Full Name *</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person"></i></span>
-            <input type="text" class="form-control" id="par-name" placeholder="Your Full Name">
+            <input type="text" class="form-control" id="par-name" placeholder="Full Name">
           </div>
         </div>
         <div class="col-md-6">

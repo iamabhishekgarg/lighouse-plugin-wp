@@ -64,7 +64,7 @@ if ($planner_id) {
       <?php else: ?>
         <div class="lhp-sidebar-brand"><i class="bi bi-house-heart-fill lhp-brand-icon-sm"></i><span>Family Lighthouse</span></div>
       <?php endif; ?>
-      <button class="lhp-sidebar-toggle d-xl-none" id="lhp-sidebar-close"><i class="bi bi-x-lg"></i></button>
+      <button class="lhp-sidebar-toggle d-xl-none" id="lhp-sidebar-close" aria-label="Close sidebar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>
     <div class="lhp-sidebar-user">
       <div class="lhp-avatar-lg"><?php echo esc_html($initials); ?></div>
@@ -168,8 +168,8 @@ if ($planner_id) {
               <button class="btn btn-outline-secondary btn-sm ms-1" id="ppar-o2-cancel-btn" style="display:none"><i class="bi bi-x me-1"></i>Cancel</button>
             </div>
 
-            <div class="alert alert-success d-none mt-2 py-1 px-2 small" id="ppar-o2-success"></div>
-            <div class="alert alert-danger d-none mt-2 py-1 px-2 small" id="ppar-o2-error"></div>
+            <div class="alert alert-success d-none mt-2 py-1 px-2 small" id="ppar-o2-success" role="status" aria-live="polite"></div>
+            <div class="alert alert-danger d-none mt-2 py-1 px-2 small" id="ppar-o2-error" role="alert" aria-live="assertive"></div>
           </div>
         </div>
 
@@ -189,8 +189,8 @@ if ($planner_id) {
       </div>
       <div class="modal-body lhp-modal-body" id="section-modal-body"></div>
       <div class="modal-footer">
-        <div class="alert alert-danger d-none mb-0 py-2 flex-grow-1" id="section-save-error"></div>
-        <div class="alert alert-success d-none mb-0 py-2 flex-grow-1" id="section-save-success"></div>
+        <div class="alert alert-danger d-none mb-0 py-2 flex-grow-1" id="section-save-error" role="alert" aria-live="assertive"></div>
+        <div class="alert alert-success d-none mb-0 py-2 flex-grow-1" id="section-save-success" role="status" aria-live="polite"></div>
         <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
         <button class="btn lhp-btn-primary-solid" id="lhp-save-section"><i class="bi bi-check-circle me-2"></i>Save Changes</button>
       </div>
@@ -250,8 +250,8 @@ if ($planner_id) {
             <button class="btn btn-outline-secondary lhp-toggle-pass" type="button" data-target="welcome-pass2" tabindex="-1"><i class="bi bi-eye"></i></button>
           </div>
         </div>
-        <div class="alert alert-danger d-none" id="welcome-error"></div>
-        <div class="alert alert-success d-none" id="welcome-success"></div>
+        <div class="alert alert-danger d-none" id="welcome-error" role="alert" aria-live="assertive"></div>
+        <div class="alert alert-success d-none" id="welcome-success" role="status" aria-live="polite"></div>
       </div>
       <div class="modal-footer">
         <button class="btn lhp-btn-primary-solid w-100" id="lhp-welcome-save-pass">
