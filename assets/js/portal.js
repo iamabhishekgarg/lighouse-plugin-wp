@@ -1377,7 +1377,7 @@
         });
       $tr.find("[data-optout]:checked").each(function () {
         var target = $(this).data("optout");
-        delete row[target];
+        row[target] = '__optout__';
       });
       if (
         Object.values(row).some(function (v) {
@@ -1618,7 +1618,16 @@
       letters: "letters-body",
     }[table];
     var html = buildRowHtml(table, d || {});
-    if (bodyId && html) $("#" + bodyId).append(html);
+    if (!bodyId || !html) return;
+    var $row = $(html);
+    if (d) {
+      Object.keys(d).forEach(function (k) {
+        if (d[k] === '__optout__') {
+          $row.find('[data-optout="' + k + '"]').prop('checked', true).trigger('change');
+        }
+      });
+    }
+    $("#" + bodyId).append($row);
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -2278,7 +2287,8 @@
     var rm =
       '<td><button type="button" class="lhp-remove-row" title="Remove"><i class="bi bi-trash3"></i></button></td>';
     function v(k) {
-      return esc(d[k] || "");
+      var val = d[k];
+      return esc(val === '__optout__' ? '' : (val || ''));
     }
     function inp(field, type, ph) {
       return (
@@ -3310,7 +3320,7 @@
             "<tr>" +
             r
               .map(function (c) {
-                return "<td>" + esc(c || "—") + "</td>";
+                return "<td>" + (c === '__optout__' ? '<em class="text-muted small">Prefer not to include</em>' : esc(c || "—")) + "</td>";
               })
               .join("") +
             "</tr>"
