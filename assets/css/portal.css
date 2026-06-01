@@ -3129,6 +3129,12 @@
   }
 }
 
+/* ── PENDING RECORD CARD ─────────────────────────────────── */
+.lhp-record-card-pending {
+  opacity: 0.85;
+  border-style: dashed !important;
+}
+
 /* ── REDUCED MOTION ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .lhp-root *,

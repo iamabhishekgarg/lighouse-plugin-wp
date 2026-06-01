@@ -258,6 +258,55 @@ $is_super  = in_array( $role, [ 'lhp_super_admin', 'administrator' ] );
   </div>
 </div>
 
+<!-- ═══ MODAL: Death Verification ════════════════════════ -->
+<div class="modal fade" id="lhp-death-verify-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content lhp-modal-content">
+      <div class="modal-header lhp-modal-header">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-medical me-2"></i>Verify &amp; Activate Access</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body lhp-modal-body">
+        <div class="alert alert-warning d-flex gap-2 align-items-start mb-3">
+          <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+          <span>Upload a death certificate, obituary, or legal notice to confirm the owner has passed and activate this person's access.</span>
+        </div>
+        <input type="hidden" id="dv-entry-id">
+        <input type="hidden" id="dv-entry-type" value="access_person">
+        <input type="hidden" id="dv-record-id-dv" value="0">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Verification Document <span class="text-danger">*</span></label>
+          <div class="lhp-upload-drop-zone" id="dv-drop-zone">
+            <i class="bi bi-file-earmark-arrow-up fs-3 text-muted mb-2 d-block"></i>
+            <div class="text-muted small">Drag &amp; drop or <span class="lhp-link" id="dv-browse-trigger">browse</span></div>
+            <div class="text-muted" style="font-size:11px">PDF, JPG, PNG — max 10 MB</div>
+            <input type="file" id="dv-file-input" accept=".pdf,.jpg,.jpeg,.png" class="d-none">
+          </div>
+          <div id="dv-file-preview" class="mt-2 d-none">
+            <div class="d-flex align-items-center gap-2 p-2 border rounded">
+              <i class="bi bi-file-earmark-check text-success"></i>
+              <span id="dv-file-name" class="small fw-semibold text-truncate flex-grow-1"></span>
+              <button type="button" class="btn btn-sm btn-link text-danger p-0" id="dv-file-clear" aria-label="Remove file"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="text-danger small mt-1 d-none" id="dv-file-error">Please attach a verification document before activating.</div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+          <textarea class="form-control" id="dv-notes" rows="2" placeholder="e.g. Death certificate issued by County of LA, dated June 2026"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn lhp-btn-primary-solid" id="dv-confirm-btn" type="button">
+          <span class="btn-label"><i class="bi bi-check-circle me-1"></i>Confirm &amp; Activate</span>
+          <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-1"></span>Activating…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ MODAL: Confirm Delete User ═══════════════════════ -->
 <div class="modal fade" id="lhp-confirm-user-modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">

@@ -1539,17 +1539,28 @@ class LH_Ajax
     $rec_ids = get_user_meta($uid, '_flp_delegated_record_ids', true) ?: [];
     $data = [];
     foreach ($rec_ids as $rid) {
-    if (!LH_Auth::verify_record_access($rid, $uid))
-      continue;
-    $subject = get_post_meta($rid, '_flp_subject', true) ?: [];
-    $delegated = get_post_meta($rid, '_flp_delegated_users', true) ?: [];
+    $has_access = LH_Auth::verify_record_access($rid, $uid);
+
+    // Find this user's entry — check both delegated_users and access_people
     $my_entry = null;
+    $my_status = 'pending';
+
+    $delegated = get_post_meta($rid, '_flp_delegated_users', true) ?: [];
     foreach ($delegated as $d) {
-      if ((int) ($d['user_id'] ?? 0) === $uid) {
-        $my_entry = $d;
-        break;
+      if ((int) ($d['user_id'] ?? 0) === $uid) { $my_entry = $d; $my_status = $d['status'] ?? 'pending'; break; }
+    }
+    if (!$my_entry) {
+      $access_people = get_post_meta($rid, '_flp_access_people', true) ?: [];
+      foreach ($access_people as $ap) {
+        if ((int) ($ap['user_id'] ?? 0) === $uid) { $my_entry = $ap; $my_status = $ap['status'] ?? 'pending'; break; }
       }
     }
+
+    // Include record if user has access OR has a pending entry (so they know it exists)
+    if (!$has_access && $my_status !== 'pending') continue;
+    if (!$has_access && !$my_entry) continue;
+
+    $subject = get_post_meta($rid, '_flp_subject', true) ?: [];
     $owner_id = (int) get_post_meta($rid, '_flp_owner_id', true);
     $planner_id = (int) get_post_meta($rid, '_flp_planner_id', true);
     $owner = $owner_id ? get_userdata($owner_id) : null;
@@ -1563,7 +1574,8 @@ class LH_Ajax
       'completion' => (int) get_post_meta($rid, '_flp_completion', true),
       'owner_name' => $owner ? $owner->display_name : '—',
       'planner_name' => $planner ? $planner->display_name : '—',
-      'my_condition' => $my_entry ? ($my_entry['condition_type'] ?? 'immediate') : 'immediate',
+      'my_condition' => $my_entry ? ($my_entry['condition_type'] ?? ($my_entry['privilege'] ?? 'view_after_death')) : 'view_after_death',
+      'my_status' => $my_status,
       'relationship' => $my_entry ? ($my_entry['relationship'] ?? '') : '',
       'access_since' => $my_entry ? ($my_entry['added_date'] ?? '') : '',
     ];
@@ -2171,16 +2183,29 @@ class LH_Ajax
 
     if ($temp_pass) {
       $message .= "Your login credentials:\r\n";
-      $message .= "  Email: {$email}\r\n";
-      $message .= "  Temporary password: {$temp_pass}\r\n\r\n";
+      $message .= "  Email:    {$email}\r\n";
+      $message .= "  Password: {$temp_pass}\r\n\r\n";
       $message .= "Login here: {$login_url}\r\n";
       $message .= "Please change your password after first login.\r\n\r\n";
     } else {
-      $message .= "You already have an account. Login here: {$login_url}\r\n\r\n";
+      // Existing user — generate a one-time reset key so they can get in without knowing their password
+      $reset_key = get_password_reset_key(get_userdata($uid));
+      if (!is_wp_error($reset_key)) {
+        $reset_url = network_site_url("wp-login.php?action=rp&key={$reset_key}&login=" . rawurlencode(get_userdata($uid)->user_login), 'login');
+        $message .= "Login here: {$login_url}\r\n";
+        $message .= "  Email: {$email}\r\n\r\n";
+        $message .= "Forgot your password or first time here? Reset it:\r\n{$reset_url}\r\n\r\n";
+      } else {
+        $message .= "Login here: {$login_url}\r\n";
+        $message .= "  Email: {$email}\r\n\r\n";
+      }
     }
 
     if ($is_pending) {
-      $message .= "Note: Your access is currently pending. It will be activated by the owner or their planner when the time comes.\r\n\r\n";
+      $message .= "IMPORTANT: Your access is currently pending.\r\n";
+      $message .= "You can log in but your Lighthouse view will unlock only after\r\n";
+      $message .= "the owner's estate planner or family confirms activation.\r\n";
+      $message .= "You do NOT need to do anything — you will be notified when access is live.\r\n\r\n";
     }
     $message .= "— Family Lighthouse";
 

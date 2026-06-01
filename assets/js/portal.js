@@ -3347,7 +3347,8 @@
             "<tr>" +
             r
               .map(function (c) {
-                return "<td>" + (c === '__optout__' ? '<em class="text-muted small">Prefer not to include</em>' : esc(c || "—")) + "</td>";
+                if (c && typeof c === 'object' && c.raw) return "<td>" + c.raw + "</td>";
+              return "<td>" + (c === '__optout__' ? '<em class="text-muted small">Prefer not to include</em>' : esc(c || "—")) + "</td>";
               })
               .join("") +
             "</tr>"
@@ -3420,11 +3421,29 @@
       view_anytime: 'May view interior at any time',
       view_after_death: 'May view interior after I (we) pass away',
     };
-    var accessBlock =
+    var pendingDeath = (d.access_people || []).filter(function(a) {
+      return a.privilege === 'view_after_death' && a.status !== 'active' && a.user_id;
+    });
+    var pendingBanner = pendingDeath.length
+      ? '<div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">' +
+        '<i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>' +
+        '<div><strong>' + pendingDeath.length + ' person' + (pendingDeath.length > 1 ? 's' : '') +
+        ' pending death verification.</strong> Activate their access by uploading a death certificate below.' +
+        '<div class="mt-2 d-flex flex-wrap gap-2">' +
+        pendingDeath.map(function(a) {
+          return '<button class="btn btn-sm btn-warning acc-activate-btn" data-id="' + esc(a.id || '') + '" data-rid="' + esc(String(d.id || 0)) + '">' +
+            '<i class="bi bi-file-earmark-medical me-1"></i>Activate ' + esc(a.full_name || a.name || 'Person') + '</button>';
+        }).join('') +
+        '</div></div></div>'
+      : '';
+    var accessBlock = pendingBanner +
       table(
-        ["Name", "Privilege", "Email", "Phone"],
+        ["Name", "Privilege", "Status", "Email", "Phone"],
         (d.access_people || []).map(function (a) {
-          return [a.full_name, privilegeLabels[a.privilege] || a.privilege || '—', a.email, a.phone];
+          var statusBadge = a.status === 'active'
+            ? '<span class="badge bg-success">Active</span>'
+            : '<span class="badge bg-warning text-dark">Pending</span>';
+          return [a.full_name, privilegeLabels[a.privilege] || a.privilege || '—', { raw: statusBadge }, a.email, a.phone];
         }),
       );
 
@@ -4364,54 +4383,39 @@
           );
           return;
         }
-        var condLabels = {
-          immediate: "Immediate access",
-          date: "Date-activated",
-          manual: "Event-activated",
-        };
         var html = records
           .map(function (r) {
+            var isPending = r.my_status === 'pending';
+            var statusBadge = isPending
+              ? '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Pending Activation</span>'
+              : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>';
+            var actionBtn = isPending
+              ? '<div class="alert alert-info py-2 px-3 small mb-0" role="status">' +
+                '<i class="bi bi-info-circle me-1"></i>' +
+                'Your access is waiting to be activated by the owner\'s estate planner. You will be notified when it goes live.' +
+                '</div>'
+              : '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record" data-id="' + r.id + '">' +
+                '<i class="bi bi-eye me-2"></i>View Lighthouse</button>';
             return (
               '<div class="col-sm-6 col-lg-4">' +
-              '<div class="lhp-record-card h-100">' +
+              '<div class="lhp-record-card h-100' + (isPending ? ' lhp-record-card-pending' : '') + '">' +
               '<div class="lhp-record-card-head">' +
               '<div class="lhp-section-icon-wrap" style="width:48px;height:48px;font-size:22px"><i class="bi bi-house-heart-fill"></i></div>' +
               '<div class="flex-grow-1">' +
-              '<div class="fw-bold">' +
-              esc(r.subject_name || r.title) +
-              "</div>" +
-              '<div class="text-muted small">Owner: ' +
-              esc(r.owner_name) +
-              "</div>" +
+              '<div class="fw-bold">' + esc(r.subject_name || r.title) + "</div>" +
+              '<div class="text-muted small">Owner: ' + esc(r.owner_name) + "</div>" +
               (r.planner_name && r.planner_name !== "—"
-                ? '<div class="text-muted small">Estate Planner: ' +
-                  esc(r.planner_name) +
-                  "</div>"
+                ? '<div class="text-muted small">Estate Planner: ' + esc(r.planner_name) + "</div>"
                 : "") +
-              "</div>" +
-              "</div>" +
+              "</div></div>" +
               '<div class="d-flex gap-2 mb-3 flex-wrap">' +
-              '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>' +
-              '<span class="badge bg-light text-dark border"><i class="bi bi-clock me-1"></i>' +
-              esc(condLabels[r.my_condition] || r.my_condition) +
-              "</span>" +
-              (r.relationship
-                ? '<span class="badge bg-light text-dark border">' +
-                  esc(r.relationship) +
-                  "</span>"
+              statusBadge +
+              (r.relationship ? '<span class="badge bg-light text-dark border">' + esc(r.relationship) + "</span>" : "") +
+              "</div>" +
+              (!isPending
+                ? '<div class="lhp-progress-wrap mb-3"><div class="lhp-prog"><div class="lhp-prog-fill" style="width:' + r.completion + '%"></div></div><span class="lhp-prog-pct">' + r.completion + "%</span></div>"
                 : "") +
-              "</div>" +
-              '<div class="lhp-progress-wrap mb-3">' +
-              '<div class="lhp-prog"><div class="lhp-prog-fill" style="width:' +
-              r.completion +
-              '%"></div></div>' +
-              '<span class="lhp-prog-pct">' +
-              r.completion +
-              "%</span>" +
-              "</div>" +
-              '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record" data-id="' +
-              r.id +
-              '"><i class="bi bi-eye me-2"></i>View Lighthouse</button>' +
+              actionBtn +
               "</div></div>"
             );
           })
