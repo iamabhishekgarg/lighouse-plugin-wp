@@ -140,6 +140,75 @@ $lhp_is_new_invite = isset($_GET['lhp_new_invite']) ? 1 : 0;
   </div>
 </div>
 
+<!-- ═══ MODAL: Self-Service Access Activation ═════════════ -->
+<div class="modal fade" id="lhp-self-activate-modal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content lhp-modal-content">
+      <div class="modal-header lhp-modal-header">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-medical me-2"></i>Request Lighthouse Access</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body lhp-modal-body">
+        <input type="hidden" id="sa-record-id" value="0">
+
+        <!-- Step 1: Upload document -->
+        <div id="sa-step-1">
+          <div class="alert alert-info d-flex gap-2 align-items-start mb-3">
+            <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+            <span>Upload a death certificate, obituary, or legal notice confirming the owner has passed. We will then send a verification code to your email.</span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Verification Document <span class="text-danger">*</span></label>
+            <div class="lhp-upload-drop-zone" id="sa-drop-zone">
+              <i class="bi bi-file-earmark-arrow-up fs-3 text-muted mb-2 d-block"></i>
+              <div class="text-muted small">Drag &amp; drop or <span class="lhp-link" id="sa-browse-trigger">browse</span></div>
+              <div class="text-muted" style="font-size:11px">PDF, JPG, PNG — max 10 MB</div>
+              <input type="file" id="sa-file-input" accept=".pdf,.jpg,.jpeg,.png" class="d-none">
+            </div>
+            <div id="sa-file-preview" class="mt-2 d-none">
+              <div class="d-flex align-items-center gap-2 p-2 border rounded">
+                <i class="bi bi-file-earmark-check text-success"></i>
+                <span id="sa-file-name" class="small fw-semibold text-truncate flex-grow-1"></span>
+                <button type="button" class="btn btn-sm btn-link text-danger p-0" id="sa-file-clear" aria-label="Remove file"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+              </div>
+            </div>
+            <div class="text-danger small mt-1 d-none" id="sa-file-error">Please attach a document before continuing.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+            <textarea class="form-control" id="sa-notes" rows="2" placeholder="e.g. Death certificate from County of LA, June 2026"></textarea>
+          </div>
+          <div class="alert alert-danger d-none" id="sa-step1-error" role="alert"></div>
+          <button class="btn lhp-btn-primary-solid w-100" id="sa-upload-btn" type="button">
+            <span class="btn-label"><i class="bi bi-upload me-2"></i>Upload &amp; Send OTP to My Email</span>
+            <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-2"></span>Uploading…</span>
+          </button>
+        </div>
+
+        <!-- Step 2: OTP verification -->
+        <div id="sa-step-2" style="display:none">
+          <div class="alert alert-success d-flex gap-2 align-items-start mb-3">
+            <i class="bi bi-check-circle-fill flex-shrink-0 mt-1"></i>
+            <span>Document uploaded. A 6-digit verification code has been sent to your email. Enter it below to activate your access.</span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Email Verification Code <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-lg text-center fw-bold" id="sa-otp-input"
+              placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]{6}"
+              autocomplete="one-time-code" style="letter-spacing:0.3em;font-size:1.5rem">
+            <div class="text-muted small mt-1">Code expires in 15 minutes. <span class="lhp-link" id="sa-resend-otp" style="cursor:pointer">Resend code</span></div>
+          </div>
+          <div class="alert alert-danger d-none" id="sa-step2-error" role="alert"></div>
+          <button class="btn lhp-btn-primary-solid w-100" id="sa-verify-btn" type="button">
+            <span class="btn-label"><i class="bi bi-shield-check me-2"></i>Verify &amp; Activate Access</span>
+            <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-2"></span>Verifying…</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 window.lhpInviteConfig = {
   isNewInvite:  <?php echo $lhp_is_new_invite; ?>,

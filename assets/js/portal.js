@@ -2180,29 +2180,13 @@
         var accRows = (data.access_people && data.access_people.length ? data.access_people : [{}]).map(function(d) {
           return buildRowHtml("access", d);
         }).join("");
-        // Pending activation badges for view_after_death entries with user_id set
-        var pendingActivations = (data.access_people || []).filter(function(p) {
-          return p.privilege === 'view_after_death' && p.user_id && p.status !== 'active';
-        });
-        var activationHtml = pendingActivations.length
-          ? '<div class="mt-3">' +
-            pendingActivations.map(function(p) {
-              return '<div class="d-flex align-items-center justify-content-between p-2 border rounded mb-2 bg-light">' +
-                '<span class="small"><i class="bi bi-hourglass-split text-warning me-2"></i><strong>' + esc(p.full_name || p.name || '') + '</strong> — pending death verification</span>' +
-                '<button class="btn btn-sm btn-outline-success acc-activate-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(myData.id || 0)) + '">' +
-                '<i class="bi bi-file-earmark-medical me-1"></i>Verify &amp; Activate</button>' +
-                '</div>';
-            }).join('') +
-            '</div>'
-          : '';
         return (
           '<div class="lhp-repeater"><table class="table lhp-repeater-table mb-0">' +
           '<thead><tr><th>Full Name <span class="text-danger">*</span></th><th>Privilege <span class="text-danger">*</span></th><th>Email</th><th>Phone</th><th style="width:44px"></th></tr></thead>' +
           '<tbody id="access-body">' + accRows + '</tbody>' +
           '</table>' +
           '<button class="btn btn-sm btn-outline-primary mt-2 lhp-add-row" data-table="access">' +
-          '<i class="bi bi-plus-circle me-1"></i>Add Row</button></div>' +
-          activationHtml
+          '<i class="bi bi-plus-circle me-1"></i>Add Row</button></div>'
         );
       }
       case "personal_items":
@@ -4356,20 +4340,118 @@
     loadDelegatedRecords();
     loadDelegatedProfile();
     initWelcomeModal();
+    initSelfActivation();
     $("#lhp-save-del-profile").on("click", function () {
       ajax(
         "lhp_save_profile",
         { name: $("#del-prof-name").val() },
-        function () {
-          toast("Profile saved.");
-        },
-        function (m) {
-          toast(m, "error");
-        },
+        function () { toast("Profile saved."); },
+        function (m) { toast(m, "error"); },
       );
     });
     $(document).on("click", ".lhp-view-delegated-record", function () {
       openRecordDetail(parseInt($(this).data("id")));
+    });
+  }
+
+  function initSelfActivation() {
+    var saDocId = 0;
+
+    // Open modal
+    $(document).on("click", ".lhp-self-activate-btn", function () {
+      var rid = $(this).data("rid");
+      $("#sa-record-id").val(rid);
+      saDocId = 0;
+      $("#sa-file-input").val("").data("file", null);
+      $("#sa-file-preview").addClass("d-none");
+      $("#sa-file-error,#sa-step1-error,#sa-step2-error").addClass("d-none");
+      $("#sa-notes").val("");
+      $("#sa-otp-input").val("");
+      $("#sa-step-1").show();
+      $("#sa-step-2").hide();
+      showModal("lhp-self-activate-modal");
+    });
+
+    // File browse
+    $(document).on("click", "#sa-browse-trigger,#sa-drop-zone", function () { $("#sa-file-input").trigger("click"); });
+    $(document).on("change", "#sa-file-input", function () {
+      var f = this.files[0]; if (!f) return;
+      if (f.size > 10 * 1024 * 1024) { toast("File must be under 10 MB.", "error"); return; }
+      $(this).data("file", f);
+      $("#sa-file-name").text(f.name);
+      $("#sa-file-preview").removeClass("d-none");
+      $("#sa-file-error").addClass("d-none");
+    });
+    $(document).on("click", "#sa-file-clear", function () {
+      $("#sa-file-input").val("").data("file", null);
+      $("#sa-file-preview").addClass("d-none");
+    });
+
+    // Step 1: upload doc + send OTP
+    $(document).on("click", "#sa-upload-btn", function () {
+      var $btn = $(this);
+      var file = $("#sa-file-input").data("file");
+      var rid  = parseInt($("#sa-record-id").val()) || 0;
+      if (!file) { $("#sa-file-error").removeClass("d-none"); return; }
+      if (!rid)  { toast("Record ID missing.", "error"); return; }
+      $("#sa-step1-error").addClass("d-none");
+      btnLoad($btn, true);
+      var fd = new FormData();
+      fd.append("action", "lhp_upload_death_doc");
+      fd.append("nonce", cfg.nonce);
+      fd.append("record_id", rid);
+      fd.append("entry_id", "self");
+      fd.append("notes", $("#sa-notes").val().trim());
+      fd.append("file", file);
+      $.ajax({ url: cfg.ajax_url, type: "POST", data: fd, processData: false, contentType: false })
+        .done(function (r) {
+          btnLoad($btn, false);
+          if (!r.success) { $("#sa-step1-error").text(r.data || "Upload failed.").removeClass("d-none"); return; }
+          saDocId = r.data.attachment_id;
+          // Send OTP
+          ajax("lhp_send_access_otp", { record_id: rid },
+            function () {
+              $("#sa-step-1").hide();
+              $("#sa-step-2").show();
+              $("#sa-otp-input").trigger("focus");
+            },
+            function (m) { $("#sa-step1-error").text(m).removeClass("d-none"); }
+          );
+        })
+        .fail(function () { btnLoad($btn, false); $("#sa-step1-error").text("Upload failed. Try again.").removeClass("d-none"); });
+    });
+
+    // Resend OTP
+    $(document).on("click", "#sa-resend-otp", function () {
+      var rid = parseInt($("#sa-record-id").val()) || 0;
+      ajax("lhp_send_access_otp", { record_id: rid },
+        function () { toast("New code sent to your email.", "info"); },
+        function (m) { toast(m, "error"); }
+      );
+    });
+
+    // Step 2: verify OTP + activate
+    $(document).on("click", "#sa-verify-btn", function () {
+      var $btn = $(this);
+      var otp = $("#sa-otp-input").val().trim();
+      var rid = parseInt($("#sa-record-id").val()) || 0;
+      if (!otp || otp.length < 6) { $("#sa-step2-error").text("Enter the 6-digit code from your email.").removeClass("d-none"); return; }
+      $("#sa-step2-error").addClass("d-none");
+      btnLoad($btn, true);
+      ajax("lhp_verify_access_otp", { record_id: rid, otp: otp, doc_id: saDocId },
+        function () {
+          hideModal("lhp-self-activate-modal");
+          btnLoad($btn, false);
+          toast("Access activated! You can now view the Lighthouse.", "success");
+          loadDelegatedRecords();
+        },
+        function (m) { btnLoad($btn, false); $("#sa-step2-error").text(m).removeClass("d-none"); }
+      );
+    });
+
+    // OTP — allow only digits
+    $(document).on("input", "#sa-otp-input", function () {
+      this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
     });
   }
 
@@ -4395,9 +4477,10 @@
               ? '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Pending Activation</span>'
               : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>';
             var actionBtn = isPending
-              ? '<div class="alert alert-info py-2 px-3 small mb-0" role="status">' +
-                '<i class="bi bi-info-circle me-1"></i>' +
-                'Your access is waiting to be activated by the owner\'s estate planner. You will be notified when it goes live.' +
+              ? '<div class="lhp-self-activate-wrap" data-rid="' + esc(String(r.id)) + '">' +
+                '<p class="text-muted small mb-2"><i class="bi bi-info-circle me-1"></i>The owner has passed? Upload a death certificate + verify your email to activate your access.</p>' +
+                '<button class="btn w-100 lhp-btn-primary-solid lhp-self-activate-btn" data-rid="' + esc(String(r.id)) + '">' +
+                '<i class="bi bi-file-earmark-medical me-2"></i>Request Access — Upload Verification</button>' +
                 '</div>'
               : '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record" data-id="' + r.id + '">' +
                 '<i class="bi bi-eye me-2"></i>View Lighthouse</button>';

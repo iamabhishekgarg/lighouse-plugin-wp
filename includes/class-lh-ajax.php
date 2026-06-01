@@ -35,6 +35,8 @@ class LH_Ajax
     'lhp_activate_delegated_access',
     'lhp_upload_death_doc',
     'lhp_activate_access_person',
+    'lhp_send_access_otp',
+    'lhp_verify_access_otp',
     'lhp_get_my_delegated_records',
     'lhp_create_parent_record',
     'lhp_get_invite_link',
@@ -1489,13 +1491,122 @@ class LH_Ajax
     wp_send_json_success('Access activated.');
     }
 
+    static function lhp_send_access_otp()
+    {
+    self::verify();
+    $uid     = get_current_user_id();
+    $post_id = intval($_POST['record_id'] ?? 0);
+    if (!$post_id) wp_send_json_error('Invalid record.');
+
+    // Confirm user has a pending entry
+    $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $found  = false;
+    foreach ($people as $p) {
+    if ((int)($p['user_id'] ?? 0) === $uid && ($p['status'] ?? '') === 'pending') { $found = true; break; }
+    }
+    if (!$found) wp_send_json_error('No pending access found for your account.');
+
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('User not found.');
+
+    // Generate 6-digit OTP, store in transient (15 min TTL)
+    $otp       = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    $trans_key = 'lhp_access_otp_' . $uid . '_' . $post_id;
+    set_transient($trans_key, wp_hash($otp), 15 * MINUTE_IN_SECONDS);
+
+    $login_url = home_url('/lhp-login');
+    $subject   = 'Your Family Lighthouse Access Verification Code';
+    $message   = "Hello {$user->display_name},\r\n\r\n";
+    $message  .= "Your email verification code to activate Lighthouse access:\r\n\r\n";
+    $message  .= "    {$otp}\r\n\r\n";
+    $message  .= "This code expires in 15 minutes.\r\n";
+    $message  .= "If you did not request this, ignore this email.\r\n\r\n";
+    $message  .= "— Family Lighthouse";
+
+    wp_mail($user->user_email, $subject, $message);
+    wp_send_json_success('OTP sent.');
+    }
+
+    static function lhp_verify_access_otp()
+    {
+    self::verify();
+    $uid     = get_current_user_id();
+    $post_id = intval($_POST['record_id'] ?? 0);
+    $otp     = sanitize_text_field($_POST['otp'] ?? '');
+    $doc_id  = intval($_POST['doc_id'] ?? 0);
+    if (!$post_id || !$otp) wp_send_json_error('Invalid request.');
+
+    // Verify OTP
+    $trans_key = 'lhp_access_otp_' . $uid . '_' . $post_id;
+    $stored    = get_transient($trans_key);
+    if (!$stored || !hash_equals($stored, wp_hash($otp)))
+    wp_send_json_error('Invalid or expired code. Please request a new one.');
+
+    delete_transient($trans_key); // one-time use
+
+    // Find and activate the user's pending entry
+    $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $activated = false;
+    $person_name = '';
+    foreach ($people as &$p) {
+    if ((int)($p['user_id'] ?? 0) !== $uid || ($p['status'] ?? '') !== 'pending') continue;
+    $p['status']             = 'active';
+    $p['activated_at']       = current_time('mysql');
+    $p['self_activated']     = true;
+    if ($doc_id) {
+      $p['death_doc_id']   = $doc_id;
+      $p['death_doc_name'] = basename(get_attached_file($doc_id) ?: '');
+    }
+    $person_name = $p['full_name'] ?? $p['name'] ?? '';
+    $activated = true;
+    break;
+    }
+    if (!$activated) wp_send_json_error('Could not find your pending access entry.');
+
+    update_post_meta($post_id, '_flp_access_people', $people);
+    self::log_activity('self_access_activated', "User #{$uid} self-activated access on record #{$post_id} via OTP." . ($doc_id ? " Doc #{$doc_id}." : ''), $post_id, $uid);
+
+    // Notify planner
+    $planner_id = (int)get_post_meta($post_id, '_flp_planner_id', true);
+    if ($planner_id) {
+    $planner = get_userdata($planner_id);
+    $user    = get_userdata($uid);
+    if ($planner && $user) {
+      $msg  = "Hello {$planner->display_name},\r\n\r\n";
+      $msg .= "{$user->display_name} has self-activated their access to a Family Lighthouse record (#{$post_id}).\r\n";
+      $msg .= "They uploaded a death verification document and confirmed via email OTP.\r\n\r\n";
+      $msg .= "Please review the uploaded document in your planner dashboard.\r\n\r\n";
+      $msg .= "— Family Lighthouse";
+      wp_mail($planner->user_email, 'Family Lighthouse — Access Self-Activated', $msg);
+    }
+    }
+
+    wp_send_json_success('Access activated.');
+    }
+
     static function lhp_upload_death_doc()
     {
     self::verify();
     $post_id  = intval($_POST['record_id'] ?? 0);
     $entry_id = sanitize_key($_POST['entry_id'] ?? '');
-    if (!$post_id || !LH_Auth::verify_record_access($post_id))
-    wp_send_json_error('Access denied.');
+    $uid      = get_current_user_id();
+    $is_self  = ($entry_id === 'self');
+
+    if (!$post_id) wp_send_json_error('Invalid record.');
+
+    // Self-service: verify current user has a pending access_people entry for this record
+    if ($is_self) {
+    $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $found  = false;
+    foreach ($people as $p) {
+      if ((int)($p['user_id'] ?? 0) === $uid && ($p['status'] ?? '') === 'pending') {
+        $found = true; break;
+      }
+    }
+    if (!$found) wp_send_json_error('No pending access found for your account on this record.');
+    } else {
+    if (!LH_Auth::verify_record_access($post_id)) wp_send_json_error('Access denied.');
+    }
 
     if (empty($_FILES['file']['tmp_name']))
     wp_send_json_error('No file received.');
