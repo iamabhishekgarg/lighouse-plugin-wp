@@ -4,12 +4,21 @@ Tags: estate planner, lighthouse, family portal, will, legacy
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 License: GPLv2 or later
 
 Role-based frontend portal for Estate Planners and families.
 
 == Changelog ==
+
+= 1.9.2 - 2026-06-01 =
+* Fixed: "Prefer not to include" toggle unchecked on form re-open — `repForm()` builds rows as raw HTML strings so DOM post-processing never ran; fix bakes `checked` + `is-checked` class directly into HTML string inside `buildRowHtml()`
+* Fixed: Server-side validation rejected `__optout__` sentinel as invalid email — PHP now skips email format check when value equals sentinel
+* Fixed: Empty email/phone without "Prefer not to include" checked allowed save — both step wizard and section modal save paths now block save and highlight fields red
+* Fixed: "Prefer not to include" sentinel shown as blank `—` in Record Detail and review summary — table helper renders sentinel as italic "Prefer not to include"; review step reads checkbox state
+* Fixed: Letters view — owner shown as unlabelled `·` dot; delegated users couldn't identify sender vs recipient — now shows explicit "From:" / "To:" labels on letters and "For:" / "From:" on file attachments
+* Added: Death verification document upload required before planner can activate manual delegated access — new modal with file drop zone, notes field; PHP stores attachment with `_lhp_death_verification` meta; delegated entry shows verified badge + filename after activation
+* Added: `lhp_upload_death_doc` AJAX action — validates mime type (PDF/JPG/PNG), 10 MB limit, stores as WP attachment
 
 = 1.9.1 - 2026-06-01 =
 * Fixed: `btn-outline-primary` dark background bleed from Bootstrap CSS variable — added `background: transparent !important` to `.lhp-root .btn-outline-primary`; removed conflicting duplicate color block
