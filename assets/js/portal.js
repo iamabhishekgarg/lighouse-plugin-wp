@@ -1625,15 +1625,7 @@
     }[table];
     var html = buildRowHtml(table, d || {});
     if (!bodyId || !html) return;
-    var $row = $(html);
-    $("#" + bodyId).append($row);
-    if (d) {
-      Object.keys(d).forEach(function (k) {
-        if (d[k] === '__optout__') {
-          $row.find('[data-optout="' + k + '"]').prop('checked', true).trigger('change');
-        }
-      });
-    }
+    $("#" + bodyId).append(html);
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -2313,7 +2305,8 @@
     }
     function optout(field) {
       var id = 'oo-' + field + '-' + Math.random().toString(36).slice(2, 8);
-      return '<label class="lhp-optout" for="' + id + '"><input type="checkbox" class="lhp-oo lhp-optout-chk" data-optout="' + field + '" id="' + id + '"><span>Prefer not to include</span></label>';
+      var isOo = d[field] === '__optout__';
+      return '<label class="lhp-optout' + (isOo ? ' is-checked' : '') + '" for="' + id + '"><input type="checkbox" class="lhp-oo lhp-optout-chk" data-optout="' + field + '" id="' + id + '"' + (isOo ? ' checked' : '') + '><span>Prefer not to include</span></label>';
     }
     function inpOptout(field, type, ph) {
       return '<div>' + inp(field, type, ph) + optout(field) + '</div>';
