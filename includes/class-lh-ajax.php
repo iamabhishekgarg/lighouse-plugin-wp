@@ -34,6 +34,7 @@ class LH_Ajax
     'lhp_remove_delegated_user',
     'lhp_activate_delegated_access',
     'lhp_upload_death_doc',
+    'lhp_activate_access_person',
     'lhp_get_my_delegated_records',
     'lhp_create_parent_record',
     'lhp_get_invite_link',
@@ -509,8 +510,26 @@ class LH_Ajax
         }
       }
       update_post_meta($post_id, "_flp_{$sec}", $val);
-      // Delegate emails for access people
+      // Ensure every access_person has a stable id, then send emails
       if ($sec === 'access_people' && is_array($val)) {
+        $existing_people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+        $existing_map = [];
+        foreach ($existing_people as $ep) {
+          if (!empty($ep['email'])) $existing_map[$ep['email']] = $ep;
+        }
+        foreach ($val as &$row) {
+          $row_email = trim($row['email'] ?? '');
+          // Preserve existing id/user_id/status if email matches
+          if ($row_email && isset($existing_map[$row_email])) {
+            $row['id']      = $row['id'] ?? ($existing_map[$row_email]['id'] ?? uniqid('ap_'));
+            $row['user_id'] = $row['user_id'] ?? ($existing_map[$row_email]['user_id'] ?? 0);
+            $row['status']  = $row['status'] ?? ($existing_map[$row_email]['status'] ?? 'pending');
+          } else {
+            if (empty($row['id'])) $row['id'] = uniqid('ap_');
+          }
+        }
+        unset($row);
+        update_post_meta($post_id, "_flp_{$sec}", $val);
         self::send_delegate_emails($val, $post_id);
       }
     }
@@ -1440,6 +1459,36 @@ class LH_Ajax
     wp_send_json_success('Access activated.');
     }
 
+    static function lhp_activate_access_person()
+    {
+    self::verify();
+    $post_id  = intval($_POST['record_id'] ?? 0);
+    $entry_id = sanitize_key($_POST['entry_id'] ?? '');
+    $doc_id   = intval($_POST['doc_id'] ?? 0);
+    if (!$post_id || !LH_Auth::verify_record_access($post_id))
+    wp_send_json_error('Access denied.');
+
+    $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $found  = false;
+    foreach ($people as &$p) {
+    if (($p['id'] ?? '') !== $entry_id) continue;
+    $p['status']       = 'active';
+    $p['activated_at'] = current_time('mysql');
+    $p['activated_by'] = get_current_user_id();
+    if ($doc_id) {
+      $p['death_doc_id']   = $doc_id;
+      $p['death_doc_name'] = basename(get_attached_file($doc_id) ?: '');
+    }
+    $found = true;
+    break;
+    }
+    if (!$found) wp_send_json_error('Entry not found.');
+
+    update_post_meta($post_id, '_flp_access_people', $people);
+    self::log_activity('access_person_activated', "Access person activated on record #{$post_id}." . ($doc_id ? " Verification doc #{$doc_id} attached." : ''), $post_id);
+    wp_send_json_success('Access activated.');
+    }
+
     static function lhp_upload_death_doc()
     {
     self::verify();
@@ -2056,33 +2105,91 @@ class LH_Ajax
 
     private static function send_delegate_emails($people, $post_id)
     {
-    $subject_name = get_post_meta($post_id, '_flp_subject', true);
-    $subject_name = is_array($subject_name) ? ($subject_name['full_name'] ?? '') : '';
-    $owner_id = (int) get_post_meta($post_id, '_flp_owner_id', true);
+    $subject_meta = get_post_meta($post_id, '_flp_subject', true);
+    $subject_name = is_array($subject_meta) ? ($subject_meta['full_name'] ?? '') : '';
+    $owner_id   = (int) get_post_meta($post_id, '_flp_owner_id', true);
     $owner_user = $owner_id ? get_userdata($owner_id) : false;
     $owner_name = $owner_user ? $owner_user->display_name : 'The Family Lighthouse owner';
-    $login_url = home_url('/login');
+    $login_url  = home_url('/lhp-login');
 
-    foreach ($people as $p) {
-    $email = $p['email'] ?? '';
-    $name  = $p['full_name'] ?? '';
-    if (!is_email($email)) continue;
-    $privilege = $p['privilege'] ?? 'view_after_death';
     $priv_labels = [
-      'unlock_all' => 'May unlock Family Lighthouse for all beneficiaries',
-      'view_anytime' => 'May view interior at any time',
-      'view_after_death' => 'May view interior after the owner passes away',
+    'unlock_all'     => 'May unlock Family Lighthouse for all beneficiaries',
+    'view_anytime'   => 'May view interior at any time',
+    'view_after_death' => 'May view interior after the owner passes away',
     ];
-    $priv_text = $priv_labels[$privilege] ?? $privilege;
 
-    $subject = "You've been granted Family Lighthouse access";
-    $message = "Hello {$name},\r\n\r\n{$owner_name} has added you as an access contact for their Family Lighthouse record.\r\n\r\n";
-    $message .= "Your privilege: {$priv_text}\r\n\r\n";
-    $message .= "Login here: {$login_url}\r\n\r\n";
-    $message .= "If you don't have an account yet, you can create one at: {$login_url}\r\n\r\n";
-    $message .= "— Family Lighthouse";
-    wp_mail($email, $subject, $message);
+    $updated_people = [];
+    foreach ($people as $p) {
+    $email     = trim($p['email'] ?? '');
+    $name      = $p['full_name'] ?? '';
+    $privilege = $p['privilege'] ?? 'view_after_death';
+
+    if (!is_email($email)) { $updated_people[] = $p; continue; }
+
+    $priv_text  = $priv_labels[$privilege] ?? $privilege;
+    $is_pending = ($privilege === 'view_after_death');
+
+    // Find or create WP account
+    $existing  = get_user_by('email', $email);
+    $temp_pass = '';
+    if ($existing) {
+      $uid = $existing->ID;
+      if (!in_array('lighthouse_delegated', (array) $existing->roles))
+        $existing->add_role('lighthouse_delegated');
+    } else {
+      $temp_pass = wp_generate_password(10, false);
+      $uid = wp_insert_user([
+        'user_login'   => sanitize_user($email, true),
+        'user_email'   => $email,
+        'user_pass'    => $temp_pass,
+        'display_name' => $name,
+        'role'         => 'lighthouse_delegated',
+      ]);
+      if (is_wp_error($uid)) { $uid = 0; }
     }
+
+    // Track record on this user
+    if ($uid) {
+      $rec_ids = get_user_meta($uid, '_flp_delegated_record_ids', true) ?: [];
+      if (!in_array($post_id, $rec_ids)) {
+        $rec_ids[] = $post_id;
+        update_user_meta($uid, '_flp_delegated_record_ids', $rec_ids);
+      }
+    }
+
+    // Store user_id and status back on the access_people entry
+    $p['user_id'] = $uid;
+    $p['status']  = $is_pending ? 'pending' : 'active';
+    $updated_people[] = $p;
+
+    // Email
+    $mail_subject = "You've been granted Family Lighthouse access";
+    $message  = "Hello {$name},\r\n\r\n";
+    $message .= "{$owner_name} has added you as an access contact";
+    if ($subject_name) $message .= " for their Family Lighthouse record ({$subject_name})";
+    $message .= ".\r\n\r\nYour privilege: {$priv_text}\r\n\r\n";
+
+    if ($temp_pass) {
+      $message .= "Your login credentials:\r\n";
+      $message .= "  Email: {$email}\r\n";
+      $message .= "  Temporary password: {$temp_pass}\r\n\r\n";
+      $message .= "Login here: {$login_url}\r\n";
+      $message .= "Please change your password after first login.\r\n\r\n";
+    } else {
+      $message .= "You already have an account. Login here: {$login_url}\r\n\r\n";
+    }
+
+    if ($is_pending) {
+      $message .= "Note: Your access is currently pending. It will be activated by the owner or their planner when the time comes.\r\n\r\n";
+    }
+    $message .= "— Family Lighthouse";
+
+    wp_mail($email, $mail_subject, $message);
+    }
+
+    // Persist updated user_id + status back to meta
+    if (!empty($updated_people))
+    update_post_meta($post_id, '_flp_access_people', $updated_people);
     }
 
     /* ── OWNER SELF / CO-OWNER DELETE PROFILE ──────────── */

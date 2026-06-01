@@ -157,22 +157,31 @@ class LH_Auth {
         if ( $role === 'lighthouse_planner' && $planner === $user_id ) return true;
         if ( $role === 'lighthouse_parent'   && ( $owner === $user_id || $owner2_id === $user_id ) ) return true;
 
-        // Delegated access check
+        // Delegated access check — formal delegated_users entries
         if ( $role === 'lighthouse_delegated' ) {
             $delegated = get_post_meta($post_id,'_flp_delegated_users',true) ?: [];
             foreach ( $delegated as $d ) {
                 if ( (int)($d['user_id'] ?? 0) !== $user_id ) continue;
                 if ( ($d['status'] ?? '') !== 'active' ) {
-                    // Check if condition is now met
                     $cond  = $d['condition_type'] ?? 'immediate';
                     $cdate = $d['condition_date'] ?? '';
                     if ( $cond === 'immediate' ) return true;
                     if ( $cond === 'date' && $cdate && strtotime($cdate) <= time() ) return true;
-                    if ( $cond === 'manual' ) return false; // must be manually activated
+                    if ( $cond === 'manual' ) return false;
                     continue;
                 }
-                return true; // status === active
+                return true;
             }
+
+            // Also check access_people entries (users added via Access & Unlock section)
+            $access_people = get_post_meta($post_id,'_flp_access_people',true) ?: [];
+            foreach ( $access_people as $p ) {
+                if ( (int)($p['user_id'] ?? 0) !== $user_id ) continue;
+                if ( ($p['status'] ?? '') === 'active' ) return true;
+                // view_after_death stays pending until manually activated
+                return false;
+            }
+
             return false;
         }
         return false;

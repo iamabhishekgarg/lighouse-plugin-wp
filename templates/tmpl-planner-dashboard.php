@@ -213,6 +213,8 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
           <span>Activating access transfers this Lighthouse to the designated person. Upload a verification document (death certificate, obituary, or legal notice) to confirm the owner has passed.</span>
         </div>
         <input type="hidden" id="dv-entry-id">
+        <input type="hidden" id="dv-entry-type" value="delegated">
+        <input type="hidden" id="dv-record-id-dv" value="0">
         <div class="mb-3">
           <label class="form-label fw-semibold">Verification Document <span class="text-danger">*</span></label>
           <div class="lhp-upload-drop-zone" id="dv-drop-zone">
@@ -242,6 +244,52 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
           <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-1"></span>Activating…</span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Multi-Step Record Form ════════════════════ -->
+<div class="modal fade" id="lhp-form-modal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content lhp-modal-content">
+
+      <!-- Step bar -->
+      <div class="lhp-step-bar">
+        <div class="lhp-step-item" data-step="1"><div class="lhp-step-num">1</div><div class="lhp-step-lbl">Subject</div></div>
+        <div class="lhp-step-connector"></div>
+        <div class="lhp-step-item" data-step="2"><div class="lhp-step-num">2</div><div class="lhp-step-lbl">Beneficiaries</div></div>
+        <div class="lhp-step-connector"></div>
+        <div class="lhp-step-item" data-step="3"><div class="lhp-step-num">3</div><div class="lhp-step-lbl">Access</div></div>
+        <div class="lhp-step-connector"></div>
+        <div class="lhp-step-item" data-step="4"><div class="lhp-step-num">4</div><div class="lhp-step-lbl">Items &amp; Burial</div></div>
+        <div class="lhp-step-connector"></div>
+        <div class="lhp-step-item" data-step="5"><div class="lhp-step-num">5</div><div class="lhp-step-lbl">Financials</div></div>
+        <div class="lhp-step-connector"></div>
+        <div class="lhp-step-item" data-step="6"><div class="lhp-step-num">6</div><div class="lhp-step-lbl">Delegated</div></div>
+        <div class="lhp-step-connector"></div>
+        <div class="lhp-step-item" data-step="7"><div class="lhp-step-num">7</div><div class="lhp-step-lbl">Review</div></div>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body lhp-modal-body">
+        <?php include LHP_DIR . 'templates/partials/form-steps.php'; ?>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer lhp-modal-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <small class="text-muted" id="ms-progress-text">Step 1 of 7</small>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary" id="ms-prev" style="visibility:hidden"><i class="bi bi-arrow-left me-1"></i>Back</button>
+          <button class="btn lhp-btn-primary-solid" id="ms-next">Continue <i class="bi bi-arrow-right ms-1"></i></button>
+        </div>
+      </div>
+
+      <!-- Hidden state -->
+      <input type="hidden" id="lhp-record-id" value="0">
+      <input type="hidden" id="lhp-record-client-id" value="0">
     </div>
   </div>
 </div>

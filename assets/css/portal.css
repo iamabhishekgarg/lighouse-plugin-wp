@@ -133,11 +133,11 @@
   gap: 6px;
 }
 /* btn-sm size override for lhp-btn-primary-solid */
-.lhp-root .btn-sm.lhp-btn-primary-solid,
+/* .lhp-root .btn-sm.lhp-btn-primary-solid,
 .btn-sm.lhp-btn-primary-solid {
   padding: 6px 14px !important;
   font-size: 13px;
-}
+} */
 .lhp-btn-saving {
   pointer-events: none !important;
   opacity: 0.85 !important;
