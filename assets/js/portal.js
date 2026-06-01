@@ -1305,16 +1305,22 @@
           if (!$rel.val().trim()) {
             $rel.addClass("is-invalid"); childValid = false;
           } else { $rel.removeClass("is-invalid"); }
-          if ($email.val().trim() && !emailOo.is(":checked") && !isEmail($email.val().trim())) {
+          // email: must be filled OR optout checked
+          if (!emailOo.is(":checked") && !$email.val().trim()) {
+            $email.addClass("is-invalid"); childValid = false;
+          } else if ($email.val().trim() && !emailOo.is(":checked") && !isEmail($email.val().trim())) {
             $email.addClass("is-invalid"); childValid = false;
           } else { $email.removeClass("is-invalid"); }
-          if ($phone.val().trim() && !phoneOo.is(":checked") && !isPhone($phone.val().trim())) {
+          // phone: must be filled OR optout checked
+          if (!phoneOo.is(":checked") && !$phone.val().trim()) {
+            $phone.addClass("is-invalid"); childValid = false;
+          } else if ($phone.val().trim() && !phoneOo.is(":checked") && !isPhone($phone.val().trim())) {
             $phone.addClass("is-invalid"); childValid = false;
           } else { $phone.removeClass("is-invalid"); }
         }
       });
       if (!childValid) {
-        toast("Each beneficiary must have a Full Name and Relationship.", "error");
+        toast("Each beneficiary needs Full Name, Relationship, and either an Email/Phone or 'Prefer not to include' checked.", "error");
         return;
       }
     }
@@ -2572,9 +2578,13 @@
         $("#children-body tr").each(function () {
           var $fn = $(this).find('[data-field="full_name"]');
           var $rel = $(this).find('[data-field="relationship"]');
+          var $email = $(this).find('[data-field="email"]');
+          var $phone = $(this).find('[data-field="phone"]');
+          var emailOo = $(this).find('[data-optout="email"]');
+          var phoneOo = $(this).find('[data-optout="phone"]');
           var rowHasData = $(this).find("[data-field]").filter(function () {
             return $(this).val().trim() !== "";
-          }).length > 0;
+          }).length > 0 || emailOo.is(":checked") || phoneOo.is(":checked");
           if (rowHasData) {
             if (!$fn.val().trim()) {
               $fn.addClass("is-invalid"); childValid = false;
@@ -2582,10 +2592,18 @@
             if (!$rel.val().trim()) {
               $rel.addClass("is-invalid"); childValid = false;
             } else { $rel.removeClass("is-invalid"); }
+            if (!emailOo.is(":checked") && !$email.val().trim()) {
+              $email.addClass("is-invalid"); childValid = false;
+            } else if ($email.val().trim() && !emailOo.is(":checked") && !isEmail($email.val().trim())) {
+              $email.addClass("is-invalid"); childValid = false;
+            } else { $email.removeClass("is-invalid"); }
+            if (!phoneOo.is(":checked") && !$phone.val().trim()) {
+              $phone.addClass("is-invalid"); childValid = false;
+            } else { $phone.removeClass("is-invalid"); }
           }
         });
         if (!childValid) {
-          toast("Each beneficiary must have a Full Name and Relationship.", "error");
+          toast("Each beneficiary needs Full Name, Relationship, and either an Email/Phone or 'Prefer not to include' checked.", "error");
           return;
         }
         p.children = JSON.stringify(getTableData("children-body"));
