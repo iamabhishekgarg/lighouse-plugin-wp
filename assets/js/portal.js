@@ -1205,17 +1205,47 @@
     var pending = accessPeople.filter(function(p) {
       return p.privilege === 'view_after_death' && p.status !== 'active' && p.user_id;
     });
+    var selfActivated = accessPeople.filter(function(p) {
+      return p.self_activated && p.status === 'active' && p.death_doc_id;
+    });
     var $panel = $("#ms-3-pending-panel");
-    if (!pending.length) { $panel.hide().html(''); return; }
-    var html = '<div class="alert alert-warning mt-3" role="alert">' +
-      '<div class="fw-semibold mb-2"><i class="bi bi-hourglass-split me-2"></i>Pending death verification — ' + pending.length + ' person' + (pending.length > 1 ? 's' : '') + '</div>' +
-      '<p class="small mb-2">These people were added with "view after death" privilege. Upload a death certificate to activate their access:</p>' +
-      '<div class="d-flex flex-wrap gap-2">' +
-      pending.map(function(p) {
-        return '<button class="btn btn-sm btn-warning acc-activate-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(recordId)) + '">' +
-          '<i class="bi bi-file-earmark-medical me-1"></i>Activate: ' + esc(p.full_name || p.name || p.email) + '</button>';
-      }).join('') +
-      '</div></div>';
+    if (!pending.length && !selfActivated.length) { $panel.hide().html(''); return; }
+
+    var html = '';
+
+    // Pending: planner can activate
+    if (pending.length) {
+      html += '<div class="alert alert-warning mt-3" role="alert">' +
+        '<div class="fw-semibold mb-2"><i class="bi bi-hourglass-split me-2"></i>Pending death verification — ' + pending.length + ' person' + (pending.length > 1 ? 's' : '') + '</div>' +
+        '<p class="small mb-2">These people need death verification before their access activates:</p>' +
+        '<div class="d-flex flex-wrap gap-2">' +
+        pending.map(function(p) {
+          return '<button class="btn btn-sm btn-warning acc-activate-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(recordId)) + '">' +
+            '<i class="bi bi-file-earmark-medical me-1"></i>Activate: ' + esc(p.full_name || p.name || p.email) + '</button>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    // Self-activated: planner can review or reject
+    if (selfActivated.length) {
+      html += '<div class="alert alert-info mt-3" role="alert">' +
+        '<div class="fw-semibold mb-2"><i class="bi bi-shield-check me-2"></i>Self-activated — awaiting planner review (' + selfActivated.length + ')</div>' +
+        '<p class="small mb-2">These people self-activated via OTP + document upload. Review the documents and reject if invalid:</p>' +
+        '<div class="d-flex flex-wrap gap-2">' +
+        selfActivated.map(function(p) {
+          var docLink = p.death_doc_id
+            ? '<a href="#" class="btn btn-sm btn-outline-secondary lhp-view-doc" target="_blank"><i class="bi bi-file-earmark-text me-1"></i>View Doc</a>'
+            : '';
+          return '<div class="d-flex align-items-center gap-2 border rounded p-2 bg-white">' +
+            '<span class="small fw-semibold">' + esc(p.full_name || p.name || p.email) + '</span>' +
+            docLink +
+            '<button class="btn btn-sm btn-outline-danger acc-reject-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(recordId)) + '" data-name="' + esc(p.full_name || p.name || '') + '">' +
+            '<i class="bi bi-x-circle me-1"></i>Reject</button>' +
+            '</div>';
+        }).join('') +
+        '</div></div>';
+    }
+
     $panel.html(html).show();
   }
 
@@ -4115,6 +4145,25 @@
       openDeathVerifyModal(id, rid, "delegated");
     });
 
+    // Reject self-activated access
+    $(document).on("click", ".acc-reject-btn", function () {
+      var id   = $(this).data("id");
+      var rid  = parseInt($(this).data("rid")) || 0;
+      var name = $(this).data("name") || "this person";
+      var reason = prompt("Reject access for " + name + "?\n\nOptional — enter reason (will be emailed to them):");
+      if (reason === null) return; // cancelled
+      ajax("lhp_reject_access_person", { record_id: rid, entry_id: id, reason: reason },
+        function () {
+          toast(name + "'s access rejected and they have been notified.", "info");
+          // Refresh panel
+          ajax("lhp_get_record", { record_id: rid }, function(data) {
+            renderPendingAccessPanel(data.access_people || [], rid);
+          });
+        },
+        function (m) { toast(m, "error"); }
+      );
+    });
+
     // Activate access — access people (section modal)
     $(document).on("click", ".acc-activate-btn", function () {
       var id = $(this).data("id");
@@ -4352,6 +4401,24 @@
     $(document).on("click", ".lhp-view-delegated-record", function () {
       openRecordDetail(parseInt($(this).data("id")));
     });
+
+    // Unlock all beneficiaries
+    $(document).on("click", ".lhp-unlock-all-btn", function () {
+      var $btn = $(this);
+      var rid  = parseInt($btn.data("id")) || 0;
+      if (!confirm("This will send email notifications to all listed beneficiaries informing them the Lighthouse has been unlocked. Are you sure?")) return;
+      $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Unlocking…');
+      ajax("lhp_unlock_all_beneficiaries", { record_id: rid },
+        function (d) {
+          toast("Lighthouse unlocked. " + (d.notified || 0) + " beneficiar" + (d.notified === 1 ? "y" : "ies") + " notified by email.");
+          loadDelegatedRecords();
+        },
+        function (m) {
+          $btn.prop("disabled", false).html('<i class="bi bi-unlock-fill me-2"></i>Unlock for All Beneficiaries');
+          toast(m, "error");
+        }
+      );
+    });
   }
 
   function initSelfActivation() {
@@ -4364,7 +4431,8 @@
       saDocId = 0;
       $("#sa-file-input").val("").data("file", null);
       $("#sa-file-preview").addClass("d-none");
-      $("#sa-file-error,#sa-step1-error,#sa-step2-error").addClass("d-none");
+      $("#sa-file-error,#sa-step1-error,#sa-step2-error,#sa-declaration-error").addClass("d-none");
+      $("#sa-declaration").prop("checked", false);
       $("#sa-notes").val("");
       $("#sa-otp-input").val("");
       $("#sa-step-1").show();
@@ -4394,6 +4462,10 @@
       var rid  = parseInt($("#sa-record-id").val()) || 0;
       if (!file) { $("#sa-file-error").removeClass("d-none"); return; }
       if (!rid)  { toast("Record ID missing.", "error"); return; }
+      if (!$("#sa-declaration").is(":checked")) {
+        $("#sa-declaration-error").removeClass("d-none"); return;
+      }
+      $("#sa-declaration-error").addClass("d-none");
       $("#sa-step1-error").addClass("d-none");
       btnLoad($btn, true);
       var fd = new FormData();
@@ -4476,14 +4548,22 @@
             var statusBadge = isPending
               ? '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Pending Activation</span>'
               : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>';
+            var isUnlockAll = r.my_condition === 'unlock_all' || r.my_privilege === 'unlock_all';
+            var isUnlocked  = !!r.unlocked_at;
             var actionBtn = isPending
               ? '<div class="lhp-self-activate-wrap" data-rid="' + esc(String(r.id)) + '">' +
                 '<p class="text-muted small mb-2"><i class="bi bi-info-circle me-1"></i>The owner has passed? Upload a death certificate + verify your email to activate your access.</p>' +
                 '<button class="btn w-100 lhp-btn-primary-solid lhp-self-activate-btn" data-rid="' + esc(String(r.id)) + '">' +
                 '<i class="bi bi-file-earmark-medical me-2"></i>Request Access — Upload Verification</button>' +
                 '</div>'
-              : '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record" data-id="' + r.id + '">' +
-                '<i class="bi bi-eye me-2"></i>View Lighthouse</button>';
+              : '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record mb-2" data-id="' + r.id + '">' +
+                '<i class="bi bi-eye me-2"></i>View Lighthouse</button>' +
+                (isUnlockAll
+                  ? isUnlocked
+                    ? '<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle me-1"></i>Lighthouse unlocked — beneficiaries have been notified.</div>'
+                    : '<button class="btn w-100 btn-warning lhp-unlock-all-btn fw-semibold" data-id="' + r.id + '">' +
+                      '<i class="bi bi-unlock-fill me-2"></i>Unlock for All Beneficiaries</button>'
+                  : '');
             return (
               '<div class="col-sm-6 col-lg-4">' +
               '<div class="lhp-record-card h-100' + (isPending ? ' lhp-record-card-pending' : '') + '">' +

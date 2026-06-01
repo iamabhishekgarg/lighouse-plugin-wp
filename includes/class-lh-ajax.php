@@ -37,6 +37,8 @@ class LH_Ajax
     'lhp_activate_access_person',
     'lhp_send_access_otp',
     'lhp_verify_access_otp',
+    'lhp_reject_access_person',
+    'lhp_unlock_all_beneficiaries',
     'lhp_get_my_delegated_records',
     'lhp_create_parent_record',
     'lhp_get_invite_link',
@@ -1584,6 +1586,111 @@ class LH_Ajax
     wp_send_json_success('Access activated.');
     }
 
+    static function lhp_reject_access_person()
+    {
+    self::verify();
+    $post_id  = intval($_POST['record_id'] ?? 0);
+    $entry_id = sanitize_key($_POST['entry_id'] ?? '');
+    $reason   = sanitize_textarea_field($_POST['reason'] ?? '');
+    if (!$post_id || !LH_Auth::verify_record_access($post_id))
+    wp_send_json_error('Access denied.');
+
+    $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $rejected_uid = 0;
+    $rejected_name = '';
+    foreach ($people as &$p) {
+    if (($p['id'] ?? '') !== $entry_id) continue;
+    $rejected_uid  = (int)($p['user_id'] ?? 0);
+    $rejected_name = $p['full_name'] ?? $p['name'] ?? '';
+    $p['status']        = 'pending'; // revert to pending
+    $p['rejected_at']   = current_time('mysql');
+    $p['rejected_by']   = get_current_user_id();
+    $p['reject_reason'] = $reason;
+    unset($p['death_doc_id'], $p['death_doc_name'], $p['self_activated'], $p['activated_at']);
+    break;
+    }
+    update_post_meta($post_id, '_flp_access_people', $people);
+    self::log_activity('access_rejected', "Access rejected for entry {$entry_id} on record #{$post_id}. Reason: {$reason}", $post_id);
+
+    // Notify the access person
+    if ($rejected_uid) {
+    $user = get_userdata($rejected_uid);
+    if ($user) {
+      $msg  = "Hello {$user->display_name},\r\n\r\n";
+      $msg .= "Your recent request to activate access to a Family Lighthouse record has been reviewed and could not be approved at this time.\r\n\r\n";
+      if ($reason) $msg .= "Reason: {$reason}\r\n\r\n";
+      $msg .= "If you believe this is in error, please contact the estate planner directly.\r\n\r\n";
+      $msg .= "— Family Lighthouse";
+      wp_mail($user->user_email, 'Family Lighthouse — Access Request Not Approved', $msg);
+    }
+    }
+
+    wp_send_json_success('Access rejected and user notified.');
+    }
+
+    static function lhp_unlock_all_beneficiaries()
+    {
+    self::verify();
+    $post_id = intval($_POST['record_id'] ?? 0);
+    $uid     = get_current_user_id();
+    if (!$post_id) wp_send_json_error('Invalid record.');
+
+    // Caller must be a delegated user with unlock_all privilege on this record
+    $access_people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $has_unlock = false;
+    foreach ($access_people as $p) {
+    if ((int)($p['user_id'] ?? 0) === $uid && ($p['privilege'] ?? '') === 'unlock_all' && ($p['status'] ?? '') === 'active') {
+      $has_unlock = true; break;
+    }
+    }
+    // Also check delegated_users with unlock_all equivalent
+    if (!$has_unlock) {
+    $delegated = get_post_meta($post_id, '_flp_delegated_users', true) ?: [];
+    foreach ($delegated as $d) {
+      if ((int)($d['user_id'] ?? 0) === $uid && ($d['status'] ?? '') === 'active') {
+        $has_unlock = true; break;
+      }
+    }
+    }
+    if (!$has_unlock) wp_send_json_error('You do not have unlock privilege on this record.');
+
+    // Load beneficiaries (children)
+    $children   = get_post_meta($post_id, '_flp_children', true) ?: [];
+    $subject    = get_post_meta($post_id, '_flp_subject', true) ?: [];
+    $subject_name = is_array($subject) ? ($subject['full_name'] ?? '') : '';
+    $owner_id   = (int)get_post_meta($post_id, '_flp_owner_id', true);
+    $owner      = $owner_id ? get_userdata($owner_id) : null;
+    $owner_name = $owner ? $owner->display_name : 'The family';
+    $login_url  = lhp_page_url('login');
+    $unlocked_by = get_userdata($uid);
+    $unlocked_name = $unlocked_by ? $unlocked_by->display_name : 'A trusted contact';
+
+    $notified = 0;
+    foreach ($children as $c) {
+    $email = trim($c['email'] ?? '');
+    $name  = $c['full_name'] ?? '';
+    if ($email === '__optout__' || !is_email($email)) continue;
+
+    $mail_subject = "Family Lighthouse Unlocked — {$subject_name}";
+    $msg  = "Hello {$name},\r\n\r\n";
+    $msg .= "{$unlocked_name} has unlocked the Family Lighthouse for {$owner_name}.\r\n\r\n";
+    $msg .= "As a listed beneficiary, you now have access to view important family information, documents, and wishes.\r\n\r\n";
+    $msg .= "Login here to view: {$login_url}\r\n\r\n";
+    $msg .= "If you do not have an account, please contact the estate planner to be set up with access.\r\n\r\n";
+    $msg .= "— Family Lighthouse";
+
+    wp_mail($email, $mail_subject, $msg);
+    $notified++;
+    }
+
+    // Mark record as unlocked
+    update_post_meta($post_id, '_flp_unlocked_at', current_time('mysql'));
+    update_post_meta($post_id, '_flp_unlocked_by', $uid);
+    self::log_activity('lighthouse_unlocked', "Lighthouse unlocked by user #{$uid} — {$notified} beneficiaries notified.", $post_id, $uid);
+
+    wp_send_json_success(['notified' => $notified]);
+    }
+
     static function lhp_upload_death_doc()
     {
     self::verify();
@@ -1685,10 +1792,12 @@ class LH_Ajax
       'completion' => (int) get_post_meta($rid, '_flp_completion', true),
       'owner_name' => $owner ? $owner->display_name : '—',
       'planner_name' => $planner ? $planner->display_name : '—',
-      'my_condition' => $my_entry ? ($my_entry['condition_type'] ?? ($my_entry['privilege'] ?? 'view_after_death')) : 'view_after_death',
-      'my_status' => $my_status,
-      'relationship' => $my_entry ? ($my_entry['relationship'] ?? '') : '',
-      'access_since' => $my_entry ? ($my_entry['added_date'] ?? '') : '',
+      'my_condition'  => $my_entry ? ($my_entry['condition_type'] ?? ($my_entry['privilege'] ?? 'view_after_death')) : 'view_after_death',
+      'my_privilege'  => $my_entry['privilege'] ?? '',
+      'my_status'     => $my_status,
+      'relationship'  => $my_entry ? ($my_entry['relationship'] ?? '') : '',
+      'access_since'  => $my_entry ? ($my_entry['added_date'] ?? '') : '',
+      'unlocked_at'   => get_post_meta($rid, '_flp_unlocked_at', true) ?: '',
     ];
     }
     wp_send_json_success($data);
