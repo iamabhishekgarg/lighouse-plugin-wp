@@ -3172,7 +3172,9 @@
   cursor: pointer;
   transition: border-color var(--lhp-transition), background var(--lhp-transition);
 }
-.lhp-upload-drop-zone:hover {
+.lhp-upload-drop-zone:hover,
+.lhp-upload-drop-zone.lhp-drop-hover {
   border-color: var(--lhp-primary);
   background: var(--lhp-primary-lt);
+  cursor: pointer;
 }

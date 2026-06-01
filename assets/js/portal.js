@@ -4172,16 +4172,37 @@
       openDeathVerifyModal(id, rid, "access_person");
     });
 
-    // Death verify modal — browse trigger
-    $(document).on("click", "#dv-browse-trigger", function () { $("#dv-file-input").trigger("click"); });
-    $(document).on("click", "#dv-drop-zone", function () { $("#dv-file-input").trigger("click"); });
-    $(document).on("change", "#dv-file-input", function () {
-      var f = this.files[0]; if (!f) return;
+    // Death verify modal — browse + drag & drop
+    $(document).on("click", "#dv-drop-zone", function (e) {
+      if ($(e.target).is("#dv-browse-trigger") || $(e.target).closest("#dv-browse-trigger").length) return;
+      $("#dv-file-input").trigger("click");
+    });
+    $(document).on("click", "#dv-browse-trigger", function (e) {
+      e.stopPropagation();
+      $("#dv-file-input").trigger("click");
+    });
+    function dvHandleFile(f) {
+      if (!f) return;
+      var allowed = ["application/pdf","image/jpeg","image/jpg","image/png"];
+      if (allowed.indexOf(f.type) === -1) { toast("Only PDF, JPG or PNG accepted.", "error"); return; }
       if (f.size > 10 * 1024 * 1024) { toast("File must be under 10 MB.", "error"); return; }
-      $(this).data("file", f);
+      $("#dv-file-input").data("file", f);
       $("#dv-file-name").text(f.name);
       $("#dv-file-preview").removeClass("d-none");
       $("#dv-file-error").addClass("d-none");
+      $("#dv-drop-zone").removeClass("lhp-drop-hover");
+    }
+    $(document).on("change", "#dv-file-input", function () { dvHandleFile(this.files[0]); });
+    $(document).on("dragover dragenter", "#dv-drop-zone", function (e) {
+      e.preventDefault(); e.stopPropagation(); $(this).addClass("lhp-drop-hover");
+    });
+    $(document).on("dragleave dragend", "#dv-drop-zone", function (e) {
+      e.preventDefault(); e.stopPropagation(); $(this).removeClass("lhp-drop-hover");
+    });
+    $(document).on("drop", "#dv-drop-zone", function (e) {
+      e.preventDefault(); e.stopPropagation(); $(this).removeClass("lhp-drop-hover");
+      var files = e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files;
+      if (files && files.length) dvHandleFile(files[0]);
     });
     $(document).on("click", "#dv-file-clear", function () {
       $("#dv-file-input").val("").data("file", null);
@@ -4440,16 +4461,48 @@
       showModal("lhp-self-activate-modal");
     });
 
-    // File browse
-    $(document).on("click", "#sa-browse-trigger,#sa-drop-zone", function () { $("#sa-file-input").trigger("click"); });
-    $(document).on("change", "#sa-file-input", function () {
-      var f = this.files[0]; if (!f) return;
+    // File browse — click on zone or browse link (stop propagation so both don't fire)
+    $(document).on("click", "#sa-drop-zone", function (e) {
+      if ($(e.target).is("#sa-browse-trigger") || $(e.target).closest("#sa-browse-trigger").length) return;
+      $("#sa-file-input").trigger("click");
+    });
+    $(document).on("click", "#sa-browse-trigger", function (e) {
+      e.stopPropagation();
+      $("#sa-file-input").trigger("click");
+    });
+
+    function saHandleFile(f) {
+      if (!f) return;
+      var allowed = ["application/pdf","image/jpeg","image/jpg","image/png"];
+      if (allowed.indexOf(f.type) === -1) { toast("Only PDF, JPG or PNG accepted.", "error"); return; }
       if (f.size > 10 * 1024 * 1024) { toast("File must be under 10 MB.", "error"); return; }
-      $(this).data("file", f);
+      $("#sa-file-input").data("file", f);
       $("#sa-file-name").text(f.name);
       $("#sa-file-preview").removeClass("d-none");
       $("#sa-file-error").addClass("d-none");
+      $("#sa-drop-zone").removeClass("lhp-drop-hover");
+    }
+
+    $(document).on("change", "#sa-file-input", function () {
+      saHandleFile(this.files[0]);
     });
+
+    // Drag & drop
+    $(document).on("dragover dragenter", "#sa-drop-zone", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      $(this).addClass("lhp-drop-hover");
+    });
+    $(document).on("dragleave dragend", "#sa-drop-zone", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      $(this).removeClass("lhp-drop-hover");
+    });
+    $(document).on("drop", "#sa-drop-zone", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      $(this).removeClass("lhp-drop-hover");
+      var files = e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files;
+      if (files && files.length) saHandleFile(files[0]);
+    });
+
     $(document).on("click", "#sa-file-clear", function () {
       $("#sa-file-input").val("").data("file", null);
       $("#sa-file-preview").addClass("d-none");
