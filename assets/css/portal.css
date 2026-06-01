@@ -3129,6 +3129,68 @@
   }
 }
 
+/* ── DECLARATION CHECKBOX ────────────────────────────────── */
+.lhp-declaration-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 1.5px solid var(--lhp-border);
+  border-radius: 10px;
+  background: var(--lhp-light);
+  margin-bottom: 12px;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.lhp-declaration-label:hover {
+  border-color: var(--lhp-primary-md);
+  background: var(--lhp-primary-lt);
+}
+.lhp-declaration-chk {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.lhp-declaration-box {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: 2px solid var(--lhp-border);
+  border-radius: 6px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+  margin-top: 1px;
+}
+.lhp-declaration-tick {
+  font-size: 14px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.lhp-declaration-chk:checked ~ .lhp-declaration-box {
+  background: var(--lhp-primary);
+  border-color: var(--lhp-primary);
+}
+.lhp-declaration-chk:checked ~ .lhp-declaration-box .lhp-declaration-tick {
+  opacity: 1;
+}
+/* :has() for modern browsers */
+.lhp-declaration-label:has(.lhp-declaration-chk:checked) {
+  border-color: var(--lhp-primary);
+  background: var(--lhp-primary-lt);
+}
+.lhp-declaration-text {
+  font-size: 13px;
+  color: var(--lhp-dark-3);
+  line-height: 1.55;
+}
+
 /* ── PENDING RECORD CARD ─────────────────────────────────── */
 .lhp-record-card-pending {
   opacity: 0.85;

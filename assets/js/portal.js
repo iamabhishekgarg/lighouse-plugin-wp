@@ -4579,6 +4579,11 @@
     $(document).on("input", "#sa-otp-input", function () {
       this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
     });
+
+    // Declaration checkbox — JS visual fallback for browsers without :has()
+    $(document).on("change", "#sa-declaration", function () {
+      $("#sa-declaration-error").addClass("d-none");
+    });
   }
 
   function loadDelegatedRecords() {

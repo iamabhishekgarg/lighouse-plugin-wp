@@ -182,13 +182,16 @@ $lhp_is_new_invite = isset($_GET['lhp_new_invite']) ? 1 : 0;
             <i class="bi bi-shield-exclamation me-1"></i>
             <strong>Important:</strong> Accepted documents: death certificate, obituary, coroner's report, probate court notice. Your submission will be reviewed by the estate planner and access may be revoked if the document is not valid.
           </div>
-          <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="sa-declaration" required>
-            <label class="form-check-label small" for="sa-declaration">
+          <label class="lhp-declaration-label" for="sa-declaration">
+            <input type="checkbox" id="sa-declaration" class="lhp-declaration-chk">
+            <span class="lhp-declaration-box">
+              <i class="bi bi-check2 lhp-declaration-tick"></i>
+            </span>
+            <span class="lhp-declaration-text">
               I confirm this is a genuine legal document. I understand that submitting a false document is fraudulent and access will be revoked immediately.
-            </label>
-            <div class="text-danger small mt-1 d-none" id="sa-declaration-error">You must confirm before proceeding.</div>
-          </div>
+            </span>
+          </label>
+          <div class="text-danger small mt-1 d-none" id="sa-declaration-error"><i class="bi bi-exclamation-circle me-1"></i>You must confirm before proceeding.</div>
           <div class="alert alert-danger d-none" id="sa-step1-error" role="alert"></div>
           <button class="btn lhp-btn-primary-solid w-100" id="sa-upload-btn" type="button">
             <span class="btn-label"><i class="bi bi-upload me-2"></i>Upload &amp; Send OTP to My Email</span>
