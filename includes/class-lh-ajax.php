@@ -37,6 +37,7 @@ class LH_Ajax
     'lhp_activate_access_person',
     'lhp_send_access_otp',
     'lhp_verify_access_otp',
+    'lhp_approve_access_person',
     'lhp_reject_access_person',
     'lhp_unlock_all_beneficiaries',
     'lhp_get_my_delegated_records',
@@ -1552,8 +1553,8 @@ class LH_Ajax
     $person_name = '';
     foreach ($people as &$p) {
     if ((int)($p['user_id'] ?? 0) !== $uid || ($p['status'] ?? '') !== 'pending') continue;
-    $p['status']             = 'active';
-    $p['activated_at']       = current_time('mysql');
+    $p['status']             = 'pending_review'; // awaits planner approval
+    $p['submitted_at']       = current_time('mysql');
     $p['self_activated']     = true;
     if ($doc_id) {
       $p['death_doc_id']   = $doc_id;
@@ -1586,6 +1587,44 @@ class LH_Ajax
     wp_send_json_success('Access activated.');
     }
 
+    static function lhp_approve_access_person()
+    {
+    self::verify();
+    $post_id  = intval($_POST['record_id'] ?? 0);
+    $entry_id = sanitize_key($_POST['entry_id'] ?? '');
+    if (!$post_id || !LH_Auth::verify_record_access($post_id))
+    wp_send_json_error('Access denied.');
+
+    $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $approved_uid = 0; $person_name = '';
+    foreach ($people as &$p) {
+    if (($p['id'] ?? '') !== $entry_id) continue;
+    $p['status']       = 'active';
+    $p['activated_at'] = current_time('mysql');
+    $p['activated_by'] = get_current_user_id();
+    $approved_uid  = (int)($p['user_id'] ?? 0);
+    $person_name   = $p['full_name'] ?? $p['name'] ?? '';
+    break;
+    }
+    update_post_meta($post_id, '_flp_access_people', $people);
+    self::log_activity('access_approved', "Planner approved access for entry {$entry_id} on record #{$post_id}.", $post_id);
+
+    // Notify the access person
+    if ($approved_uid) {
+    $user = get_userdata($approved_uid);
+    if ($user) {
+      $login_url = lhp_page_url('login');
+      $msg  = "Hello {$user->display_name},\r\n\r\n";
+      $msg .= "Great news! Your request to access the Family Lighthouse has been reviewed and approved by the estate planner.\r\n\r\n";
+      $msg .= "You can now log in and view the Lighthouse:\r\n{$login_url}\r\n\r\n";
+      $msg .= "— Family Lighthouse";
+      wp_mail($user->user_email, 'Family Lighthouse — Access Approved', $msg);
+    }
+    }
+
+    wp_send_json_success('Access approved.');
+    }
+
     static function lhp_reject_access_person()
     {
     self::verify();
@@ -1602,7 +1641,7 @@ class LH_Ajax
     if (($p['id'] ?? '') !== $entry_id) continue;
     $rejected_uid  = (int)($p['user_id'] ?? 0);
     $rejected_name = $p['full_name'] ?? $p['name'] ?? '';
-    $p['status']        = 'pending'; // revert to pending
+    $p['status']        = 'pending'; // revert to pending (allow re-submission)
     $p['rejected_at']   = current_time('mysql');
     $p['rejected_by']   = get_current_user_id();
     $p['reject_reason'] = $reason;
@@ -2350,6 +2389,14 @@ class LH_Ajax
     'view_after_death' => 'May view interior after the owner passes away',
     ];
 
+    // Load existing stored entries to detect new vs existing (avoid re-emailing)
+    $existing_stored = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $existing_by_email = [];
+    foreach ($existing_stored as $ep) {
+    $e = trim($ep['email'] ?? '');
+    if ($e) $existing_by_email[$e] = $ep;
+    }
+
     $updated_people = [];
     foreach ($people as $p) {
     $email     = trim($p['email'] ?? '');
@@ -2360,6 +2407,20 @@ class LH_Ajax
 
     $priv_text  = $priv_labels[$privilege] ?? $privilege;
     $is_pending = ($privilege === 'view_after_death');
+
+    // Skip email if already notified and email + privilege unchanged
+    $prev = $existing_by_email[$email] ?? null;
+    $already_notified = $prev && !empty($prev['email_sent'])
+      && ($prev['email'] ?? '') === $email
+      && ($prev['privilege'] ?? '') === $privilege;
+    if ($already_notified) {
+      // Carry forward user_id and status; no new email
+      $p['user_id'] = $prev['user_id'] ?? 0;
+      $p['status']  = $prev['status'] ?? ($is_pending ? 'pending' : 'active');
+      $p['email_sent'] = true;
+      $updated_people[] = $p;
+      continue;
+    }
 
     // Find or create WP account
     $existing  = get_user_by('email', $email);
@@ -2389,9 +2450,10 @@ class LH_Ajax
       }
     }
 
-    // Store user_id and status back on the access_people entry
-    $p['user_id'] = $uid;
-    $p['status']  = $is_pending ? 'pending' : 'active';
+    // Store user_id, status, and email_sent flag
+    $p['user_id']    = $uid;
+    $p['status']     = $is_pending ? 'pending' : 'active';
+    $p['email_sent'] = true;
     $updated_people[] = $p;
 
     // Email

@@ -1226,22 +1226,28 @@
         '</div></div>';
     }
 
-    // Self-activated: planner can review or reject
-    if (selfActivated.length) {
-      html += '<div class="alert alert-info mt-3" role="alert">' +
-        '<div class="fw-semibold mb-2"><i class="bi bi-shield-check me-2"></i>Self-activated — awaiting planner review (' + selfActivated.length + ')</div>' +
-        '<p class="small mb-2">These people self-activated via OTP + document upload. Review the documents and reject if invalid:</p>' +
-        '<div class="d-flex flex-wrap gap-2">' +
-        selfActivated.map(function(p) {
-          var docLink = p.death_doc_id
-            ? '<a href="#" class="btn btn-sm btn-outline-secondary lhp-view-doc" target="_blank"><i class="bi bi-file-earmark-text me-1"></i>View Doc</a>'
-            : '';
-          return '<div class="d-flex align-items-center gap-2 border rounded p-2 bg-white">' +
-            '<span class="small fw-semibold">' + esc(p.full_name || p.name || p.email) + '</span>' +
-            docLink +
+    // pending_review: planner must approve or reject
+    var pendingReview = accessPeople.filter(function(p) {
+      return p.status === 'pending_review' && p.self_activated;
+    });
+    if (pendingReview.length) {
+      html += '<div class="alert alert-warning mt-3 border-warning" role="alert">' +
+        '<div class="fw-semibold mb-2"><i class="bi bi-eye me-2"></i>Awaiting your review — ' + pendingReview.length + ' document' + (pendingReview.length > 1 ? 's' : '') + ' submitted</div>' +
+        '<p class="small mb-3">These people uploaded a death certificate and verified via OTP. Review the document and approve or reject:</p>' +
+        '<div class="d-flex flex-column gap-2">' +
+        pendingReview.map(function(p) {
+          var docUrl = p.death_doc_id ? '' : '';
+          return '<div class="d-flex align-items-center gap-2 p-2 border rounded bg-white flex-wrap">' +
+            '<div class="flex-grow-1"><span class="fw-semibold small">' + esc(p.full_name || p.name || p.email) + '</span>' +
+            (p.death_doc_name ? '<span class="text-muted small ms-2"><i class="bi bi-paperclip me-1"></i>' + esc(p.death_doc_name) + '</span>' : '') +
+            (p.submitted_at ? '<span class="text-muted small ms-2">Submitted: ' + esc(p.submitted_at.split(' ')[0]) + '</span>' : '') +
+            '</div>' +
+            '<div class="d-flex gap-2">' +
+            '<button class="btn btn-sm btn-success acc-approve-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(recordId)) + '" data-name="' + esc(p.full_name || p.name || '') + '">' +
+            '<i class="bi bi-check-circle me-1"></i>Approve</button>' +
             '<button class="btn btn-sm btn-outline-danger acc-reject-btn" data-id="' + esc(p.id || '') + '" data-rid="' + esc(String(recordId)) + '" data-name="' + esc(p.full_name || p.name || '') + '">' +
             '<i class="bi bi-x-circle me-1"></i>Reject</button>' +
-            '</div>';
+            '</div></div>';
         }).join('') +
         '</div></div>';
     }
@@ -4145,6 +4151,23 @@
       openDeathVerifyModal(id, rid, "delegated");
     });
 
+    // Approve pending_review access
+    $(document).on("click", ".acc-approve-btn", function () {
+      var id   = $(this).data("id");
+      var rid  = parseInt($(this).data("rid")) || 0;
+      var name = $(this).data("name") || "this person";
+      if (!confirm("Approve access for " + name + "? They will be able to view the Lighthouse immediately.")) return;
+      ajax("lhp_approve_access_person", { record_id: rid, entry_id: id },
+        function () {
+          toast(name + "'s access approved. They can now view the Lighthouse.", "success");
+          ajax("lhp_get_record", { record_id: rid }, function(data) {
+            renderPendingAccessPanel(data.access_people || [], rid);
+          });
+        },
+        function (m) { toast(m, "error"); }
+      );
+    });
+
     // Reject self-activated access
     $(document).on("click", ".acc-reject-btn", function () {
       var id   = $(this).data("id");
@@ -4603,10 +4626,14 @@
         }
         var html = records
           .map(function (r) {
-            var isPending = r.my_status === 'pending';
+            var isPending       = r.my_status === 'pending';
+            var isPendingReview = r.my_status === 'pending_review';
+            var isActive        = !isPending && !isPendingReview;
             var statusBadge = isPending
               ? '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Pending Activation</span>'
-              : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>';
+              : isPendingReview
+                ? '<span class="badge bg-info text-dark"><i class="bi bi-clock-history me-1"></i>Under Planner Review</span>'
+                : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>';
             var isUnlockAll = r.my_condition === 'unlock_all' || r.my_privilege === 'unlock_all';
             var isUnlocked  = !!r.unlocked_at;
             var actionBtn = isPending
@@ -4615,17 +4642,19 @@
                 '<button class="btn w-100 lhp-btn-primary-solid lhp-self-activate-btn" data-rid="' + esc(String(r.id)) + '">' +
                 '<i class="bi bi-file-earmark-medical me-2"></i>Request Access — Upload Verification</button>' +
                 '</div>'
-              : '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record mb-2" data-id="' + r.id + '">' +
-                '<i class="bi bi-eye me-2"></i>View Lighthouse</button>' +
-                (isUnlockAll
-                  ? isUnlocked
-                    ? '<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle me-1"></i>Lighthouse unlocked — beneficiaries have been notified.</div>'
-                    : '<button class="btn w-100 btn-warning lhp-unlock-all-btn fw-semibold" data-id="' + r.id + '">' +
-                      '<i class="bi bi-unlock-fill me-2"></i>Unlock for All Beneficiaries</button>'
-                  : '');
+              : isPendingReview
+                ? '<div class="alert alert-info py-2 px-3 small mb-0"><i class="bi bi-shield-check me-1"></i><strong>Document submitted.</strong> Awaiting estate planner review. You will be notified when access is approved.</div>'
+                : '<button class="btn w-100 btn-outline-primary lhp-view-delegated-record mb-2" data-id="' + r.id + '">' +
+                  '<i class="bi bi-eye me-2"></i>View Lighthouse</button>' +
+                  (isUnlockAll
+                    ? isUnlocked
+                      ? '<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle me-1"></i>Lighthouse unlocked — beneficiaries have been notified.</div>'
+                      : '<button class="btn w-100 btn-warning lhp-unlock-all-btn fw-semibold" data-id="' + r.id + '">' +
+                        '<i class="bi bi-unlock-fill me-2"></i>Unlock for All Beneficiaries</button>'
+                    : '');
             return (
               '<div class="col-sm-6 col-lg-4">' +
-              '<div class="lhp-record-card h-100' + (isPending ? ' lhp-record-card-pending' : '') + '">' +
+              '<div class="lhp-record-card h-100' + ((isPending || isPendingReview) ? ' lhp-record-card-pending' : '') + '">' +
               '<div class="lhp-record-card-head">' +
               '<div class="lhp-section-icon-wrap" style="width:48px;height:48px;font-size:22px"><i class="bi bi-house-heart-fill"></i></div>' +
               '<div class="flex-grow-1">' +
