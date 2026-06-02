@@ -1403,6 +1403,28 @@ body.lhp-portal-page #header { display: none !important; }
    Re-sets window.LHP in case wp_localize_script didn't fire,
    and confirms the script loaded.
 ───────────────────────────────────────────────────────────── */
+// Disable Elementor lightbox inside .lhp-root so portal links open normally
+add_action( 'wp_footer', function() {
+    if ( ! lhp_is_portal_page() ) return;
+    ?>
+    <script>
+    (function() {
+      if (window.elementorFrontend && elementorFrontend.hooks) {
+        elementorFrontend.hooks.addFilter('lightbox/imageData', function(data){ return false; });
+      }
+      // Also mark all existing + future .lhp-root links as lightbox-exempt
+      document.addEventListener('click', function(e) {
+        var a = e.target.closest('.lhp-root a[href]');
+        if (a) {
+          a.setAttribute('data-elementor-open-lightbox', 'no');
+          a.setAttribute('data-no-lightbox', '');
+        }
+      }, true);
+    })();
+    </script>
+    <?php
+}, 98 );
+
 add_action( 'wp_footer', 'lhp_footer_inline', 99 );
 function lhp_footer_inline() {
     if ( is_admin() ) return;

@@ -642,24 +642,33 @@
       }
       badge.text(items.length).removeClass("d-none");
       var html = items.map(function(item) {
-        return '<div class="lhp-section-card mb-3 p-4">' +
-          '<div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">' +
-          '<div>' +
-            '<div class="fw-bold">' + esc(item.person_name) + '</div>' +
-            '<div class="text-muted small">Record: ' + esc(item.record_title) + ' · Owner: ' + esc(item.owner_name) + '</div>' +
-            '<div class="text-muted small">Submitted: ' + esc(item.submitted_at || '—') + '</div>' +
-            (item.death_doc_name
-              ? '<div class="small mt-1"><i class="bi bi-paperclip me-1"></i>' +
-                (item.death_doc_url
-                  ? '<a href="' + esc(item.death_doc_url) + '" target="_blank" rel="noopener" class="fw-semibold lhp-link">' + esc(item.death_doc_name) + ' <i class="bi bi-box-arrow-up-right ms-1" style="font-size:10px"></i></a>'
-                  : '<strong>' + esc(item.death_doc_name) + '</strong>') +
-                '</div>'
-              : '') +
+        var isImg = item.death_doc_url && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(item.death_doc_url);
+        return '<div class="lhp-review-card mb-3">' +
+          '<div class="lhp-review-card-body">' +
+            '<div class="lhp-review-card-info">' +
+              '<div class="lhp-review-person">' +
+                '<div class="lhp-avatar-sm-del me-2">' + esc((item.person_name||'?').charAt(0).toUpperCase()) + '</div>' +
+                '<div>' +
+                  '<div class="fw-semibold">' + esc(item.person_name) + '</div>' +
+                  '<div class="text-muted small">' + esc(item.record_title) + ' &middot; Owner: ' + esc(item.owner_name) + '</div>' +
+                '</div>' +
+              '</div>' +
+              (item.submitted_at ? '<div class="text-muted small mt-1"><i class="bi bi-clock me-1"></i>Submitted: ' + esc(item.submitted_at.replace('T',' ').split('.')[0]) + '</div>' : '') +
+              (item.death_doc_name && item.death_doc_url
+                ? '<a href="' + esc(item.death_doc_url) + '" target="_blank" rel="noopener noreferrer" class="lhp-doc-chip mt-2" data-elementor-open-lightbox="no" data-no-lightbox onclick="event.stopPropagation()">' +
+                  '<i class="bi bi-file-earmark-arrow-down me-1"></i>' + esc(item.death_doc_name) +
+                  '<i class="bi bi-box-arrow-up-right ms-2 opacity-50" style="font-size:10px"></i>' +
+                  '</a>'
+                : '') +
+            '</div>' +
+            '<div class="lhp-review-card-actions">' +
+              '<button class="btn lhp-btn-primary-solid btn-sm ep-approve-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '">' +
+                '<i class="bi bi-check-circle me-1"></i>Approve</button>' +
+              '<button class="btn btn-outline-danger btn-sm ep-reject-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '">' +
+                '<i class="bi bi-x-circle me-1"></i>Reject</button>' +
+            '</div>' +
           '</div>' +
-          '<div class="d-flex gap-2">' +
-            '<button class="btn btn-success btn-sm ep-approve-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '"><i class="bi bi-check-circle me-1"></i>Approve</button>' +
-            '<button class="btn btn-outline-danger btn-sm ep-reject-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '"><i class="bi bi-x-circle me-1"></i>Reject</button>' +
-          '</div></div></div>';
+        '</div>';
       }).join('');
       $list.html(html);
     }, function() {

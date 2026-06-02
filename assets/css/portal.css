@@ -3191,6 +3191,64 @@
   line-height: 1.55;
 }
 
+/* ── PENDING REVIEW CARD ─────────────────────────────────── */
+.lhp-review-card {
+  background: var(--lhp-white);
+  border: 1px solid var(--lhp-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.lhp-review-card-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  flex-wrap: wrap;
+}
+.lhp-review-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.lhp-review-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.lhp-review-card-actions {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+/* Document chip link */
+.lhp-doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: var(--lhp-light);
+  border: 1px solid var(--lhp-border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lhp-primary);
+  text-decoration: none;
+  transition: background var(--lhp-transition), border-color var(--lhp-transition);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lhp-doc-chip:hover {
+  background: var(--lhp-primary-lt);
+  border-color: var(--lhp-primary-md);
+  color: var(--lhp-primary);
+}
+
 /* ── PENDING RECORD CARD ─────────────────────────────────── */
 .lhp-record-card-pending {
   opacity: 0.85;
