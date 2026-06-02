@@ -1627,6 +1627,7 @@ class LH_Ajax
         'submitted_at' => $p['submitted_at'] ?? '',
         'death_doc_id'   => $p['death_doc_id'] ?? 0,
         'death_doc_name' => $p['death_doc_name'] ?? '',
+        'death_doc_url'  => !empty($p['death_doc_id']) ? wp_get_attachment_url((int)$p['death_doc_id']) : '',
       ];
     }
     }

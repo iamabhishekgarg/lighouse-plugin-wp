@@ -648,7 +648,13 @@
             '<div class="fw-bold">' + esc(item.person_name) + '</div>' +
             '<div class="text-muted small">Record: ' + esc(item.record_title) + ' · Owner: ' + esc(item.owner_name) + '</div>' +
             '<div class="text-muted small">Submitted: ' + esc(item.submitted_at || '—') + '</div>' +
-            (item.death_doc_name ? '<div class="small mt-1"><i class="bi bi-paperclip me-1"></i><strong>' + esc(item.death_doc_name) + '</strong></div>' : '') +
+            (item.death_doc_name
+              ? '<div class="small mt-1"><i class="bi bi-paperclip me-1"></i>' +
+                (item.death_doc_url
+                  ? '<a href="' + esc(item.death_doc_url) + '" target="_blank" rel="noopener" class="fw-semibold lhp-link">' + esc(item.death_doc_name) + ' <i class="bi bi-box-arrow-up-right ms-1" style="font-size:10px"></i></a>'
+                  : '<strong>' + esc(item.death_doc_name) + '</strong>') +
+                '</div>'
+              : '') +
           '</div>' +
           '<div class="d-flex gap-2">' +
             '<button class="btn btn-success btn-sm ep-approve-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '"><i class="bi bi-check-circle me-1"></i>Approve</button>' +
