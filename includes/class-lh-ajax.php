@@ -1729,11 +1729,13 @@ class LH_Ajax
       $has_unlock = true; break;
     }
     }
-    // Also check delegated_users with unlock_all equivalent
+    // Also check delegated_users — must be active AND have unlock_all privilege
     if (!$has_unlock) {
     $delegated = get_post_meta($post_id, '_flp_delegated_users', true) ?: [];
     foreach ($delegated as $d) {
-      if ((int)($d['user_id'] ?? 0) === $uid && ($d['status'] ?? '') === 'active') {
+      if ((int)($d['user_id'] ?? 0) === $uid
+        && ($d['status'] ?? '') === 'active'
+        && ($d['privilege'] ?? '') === 'unlock_all') {
         $has_unlock = true; break;
       }
     }
@@ -1751,20 +1753,64 @@ class LH_Ajax
     $unlocked_by = get_userdata($uid);
     $unlocked_name = $unlocked_by ? $unlocked_by->display_name : 'A trusted contact';
 
+    $register_url = lhp_page_url('register');
     $notified = 0;
     foreach ($children as $c) {
     $email = trim($c['email'] ?? '');
     $name  = $c['full_name'] ?? '';
     if ($email === '__optout__' || !is_email($email)) continue;
 
+    // Check if beneficiary already has a WP account
+    $existing_user = get_user_by('email', $email);
+
     $mail_subject = "Family Lighthouse Unlocked — {$subject_name}";
     $msg  = "Hello {$name},\r\n\r\n";
     $msg .= "{$unlocked_name} has unlocked the Family Lighthouse for {$owner_name}.\r\n\r\n";
-    $msg .= "As a listed beneficiary, you now have access to view important family information, documents, and wishes.\r\n\r\n";
-    $msg .= "Login here to view: {$login_url}\r\n\r\n";
-    $msg .= "If you do not have an account, please contact the estate planner to be set up with access.\r\n\r\n";
-    $msg .= "— Family Lighthouse";
+    $msg .= "As a listed beneficiary, you can now view important family information, final wishes, documents, and messages left for you.\r\n\r\n";
 
+    if ($existing_user) {
+      $msg .= "Login here to view the Lighthouse:\r\n{$login_url}\r\n";
+      $msg .= "  Email: {$email}\r\n\r\n";
+    } else {
+      // Create account and send credentials
+      $temp_pass = wp_generate_password(10, false);
+      $new_uid = wp_insert_user([
+        'user_login'   => sanitize_user($email, true),
+        'user_email'   => $email,
+        'user_pass'    => $temp_pass,
+        'display_name' => $name,
+        'role'         => 'lighthouse_delegated',
+      ]);
+      if (!is_wp_error($new_uid)) {
+        // Give them read-only access to this record
+        $rec_ids = get_user_meta($new_uid, '_flp_delegated_record_ids', true) ?: [];
+        if (!in_array($post_id, $rec_ids)) {
+          $rec_ids[] = $post_id;
+          update_user_meta($new_uid, '_flp_delegated_record_ids', $rec_ids);
+        }
+        // Add them as an active access_people entry
+        $people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+        $already = false;
+        foreach ($people as $p) { if (trim($p['email'] ?? '') === $email) { $already = true; break; } }
+        if (!$already) {
+          $people[] = [
+            'id' => uniqid('ben_'), 'user_id' => $new_uid, 'full_name' => $name,
+            'email' => $email, 'privilege' => 'view_anytime', 'status' => 'active',
+            'email_sent' => true, 'added_date' => wp_date('M j, Y'),
+          ];
+          update_post_meta($post_id, '_flp_access_people', $people);
+        }
+        $msg .= "Your account has been created:\r\n";
+        $msg .= "  Email:    {$email}\r\n";
+        $msg .= "  Password: {$temp_pass}\r\n\r\n";
+        $msg .= "Login here: {$login_url}\r\n";
+        $msg .= "Please change your password after first login.\r\n\r\n";
+      } else {
+        $msg .= "Create your free account to view the Lighthouse:\r\n{$register_url}\r\n\r\n";
+      }
+    }
+
+    $msg .= "— Family Lighthouse";
     wp_mail($email, $mail_subject, $msg);
     $notified++;
     }
@@ -1878,8 +1924,8 @@ class LH_Ajax
       'completion' => (int) get_post_meta($rid, '_flp_completion', true),
       'owner_name' => $owner ? $owner->display_name : '—',
       'planner_name' => $planner ? $planner->display_name : '—',
-      'my_condition'  => $my_entry ? ($my_entry['condition_type'] ?? ($my_entry['privilege'] ?? 'view_after_death')) : 'view_after_death',
-      'my_privilege'  => $my_entry['privilege'] ?? '',
+      'my_condition'  => $my_entry ? ($my_entry['condition_type'] ?? '') : '',
+      'my_privilege'  => $my_entry ? ($my_entry['privilege'] ?? '') : '',
       'my_status'     => $my_status,
       'relationship'  => $my_entry ? ($my_entry['relationship'] ?? '') : '',
       'access_since'  => $my_entry ? ($my_entry['added_date'] ?? '') : '',
@@ -2515,11 +2561,25 @@ class LH_Ajax
       }
     }
 
-    if ($is_pending) {
+    // Privilege-specific instructions
+    if ($privilege === 'unlock_all') {
+      $message .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n";
+      $message .= "WHAT THIS MEANS FOR YOU:\r\n";
+      $message .= "You have been trusted to unlock this Lighthouse for all beneficiaries.\r\n\r\n";
+      $message .= "WHEN THE OWNER PASSES AWAY:\r\n";
+      $message .= "1. Log in to your account at: {$login_url}\r\n";
+      $message .= "2. Go to 'Shared Lighthouses'\r\n";
+      $message .= "3. Click 'Unlock for All Beneficiaries'\r\n";
+      $message .= "4. All listed beneficiaries will be automatically notified by email\r\n\r\n";
+      $message .= "Until then, you can view the Lighthouse contents at any time.\r\n";
+      $message .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n\r\n";
+    } elseif ($privilege === 'view_anytime') {
+      $message .= "You have permanent view access. Log in at any time to view this Lighthouse:\r\n{$login_url}\r\n\r\n";
+    } elseif ($is_pending) {
       $message .= "IMPORTANT: Your access is currently pending.\r\n";
-      $message .= "You can log in but your Lighthouse view will unlock only after\r\n";
-      $message .= "the owner's estate planner or family confirms activation.\r\n";
-      $message .= "You do NOT need to do anything — you will be notified when access is live.\r\n\r\n";
+      $message .= "When the owner passes, log in and upload a death certificate to request access.\r\n";
+      $message .= "The estate planner will review and activate your access.\r\n";
+      $message .= "You do NOT need to do anything right now.\r\n\r\n";
     }
     $message .= "— Family Lighthouse";
 

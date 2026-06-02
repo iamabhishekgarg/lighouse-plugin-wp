@@ -4699,13 +4699,22 @@
             var isPending       = r.my_status === 'pending';
             var isPendingReview = r.my_status === 'pending_review';
             var isActive        = !isPending && !isPendingReview;
+            var isUnlockAll   = r.my_privilege === 'unlock_all';
+            var isViewAnytime = r.my_privilege === 'view_anytime';
+            var isUnlocked    = !!r.unlocked_at;
+
+            var privBadge = isUnlockAll
+              ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-unlock-fill me-1"></i>Can Unlock for All</span>'
+              : isViewAnytime
+                ? '<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-eye-fill me-1"></i>View Anytime</span>'
+                : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="bi bi-clock me-1"></i>View After Death</span>';
+
             var statusBadge = isPending
               ? '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Pending Activation</span>'
               : isPendingReview
                 ? '<span class="badge bg-info text-dark"><i class="bi bi-clock-history me-1"></i>Under Planner Review</span>'
                 : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Access Active</span>';
-            var isUnlockAll = r.my_condition === 'unlock_all' || r.my_privilege === 'unlock_all';
-            var isUnlocked  = !!r.unlocked_at;
+
             var actionBtn = isPending
               ? '<div class="lhp-self-activate-wrap" data-rid="' + esc(String(r.id)) + '">' +
                 '<p class="text-muted small mb-2"><i class="bi bi-info-circle me-1"></i>The owner has passed? Upload a death certificate + verify your email to activate your access.</p>' +
@@ -4718,10 +4727,12 @@
                   '<i class="bi bi-eye me-2"></i>View Lighthouse</button>' +
                   (isUnlockAll
                     ? isUnlocked
-                      ? '<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle me-1"></i>Lighthouse unlocked — beneficiaries have been notified.</div>'
-                      : '<button class="btn w-100 btn-warning lhp-unlock-all-btn fw-semibold" data-id="' + r.id + '">' +
+                      ? '<div class="alert alert-success py-2 px-3 small mt-2 mb-0"><i class="bi bi-check-circle-fill me-1"></i><strong>Lighthouse unlocked.</strong> All beneficiaries have been notified by email.</div>'
+                      : '<button class="btn w-100 btn-danger lhp-unlock-all-btn fw-semibold mt-2" data-id="' + r.id + '">' +
                         '<i class="bi bi-unlock-fill me-2"></i>Unlock for All Beneficiaries</button>'
-                    : '');
+                    : isViewAnytime
+                      ? '<div class="alert alert-primary py-2 px-3 small mt-2 mb-0"><i class="bi bi-eye-fill me-1"></i>You have permanent view access to this Lighthouse.</div>'
+                      : '');
             return (
               '<div class="col-sm-6 col-lg-4">' +
               '<div class="lhp-record-card h-100' + ((isPending || isPendingReview) ? ' lhp-record-card-pending' : '') + '">' +
@@ -4736,6 +4747,7 @@
               "</div></div>" +
               '<div class="d-flex gap-2 mb-3 flex-wrap">' +
               statusBadge +
+              privBadge +
               (r.relationship ? '<span class="badge bg-light text-dark border">' + esc(r.relationship) + "</span>" : "") +
               "</div>" +
               (!isPending
