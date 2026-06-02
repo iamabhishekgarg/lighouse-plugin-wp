@@ -37,6 +37,7 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
       <div class="lhp-sidebar-nav-label">Workspace</div>
       <a href="#" class="lhp-nav-item active" data-view="ep-profile"><i class="bi bi-person-circle"></i><span>My Profile</span></a>
       <a href="#" class="lhp-nav-item" data-view="ep-links"><i class="bi bi-share-fill"></i><span>Share Links</span></a>
+      <a href="#" class="lhp-nav-item" data-view="ep-reviews" id="ep-reviews-nav"><i class="bi bi-shield-check"></i><span>Pending Reviews <span class="badge bg-danger ms-1 d-none" id="ep-reviews-badge">0</span></span></a>
     </nav>
     <div class="lhp-sidebar-footer">
       <button class="lhp-nav-item lhp-logout-btn w-100 border-0 bg-transparent text-start" id="lhp-logout">
@@ -161,6 +162,19 @@ $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- ─── PENDING REVIEWS VIEW ──────────────────────── -->
+    <div class="lhp-view" id="view-ep-reviews">
+      <div class="lhp-page-header">
+        <div>
+          <h1 class="lhp-page-title">Pending Reviews</h1>
+          <p class="lhp-page-sub">Clients who submitted death verification documents awaiting your approval</p>
+        </div>
+      </div>
+      <div id="ep-reviews-list">
+        <div class="text-center py-5 text-muted"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…</div>
       </div>
     </div>
 

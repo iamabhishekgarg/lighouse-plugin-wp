@@ -37,6 +37,7 @@ class LH_Ajax
     'lhp_activate_access_person',
     'lhp_send_access_otp',
     'lhp_verify_access_otp',
+    'lhp_get_pending_reviews',
     'lhp_approve_access_person',
     'lhp_reject_access_person',
     'lhp_unlock_all_beneficiaries',
@@ -497,6 +498,14 @@ class LH_Ajax
     $decoded_sections['subject'] = $subj;
     }
 
+    // Load pre-save access_people BEFORE any update_post_meta runs
+    // so email_sent flags + existing user_ids are preserved correctly
+    $pre_save_access = get_post_meta($post_id, '_flp_access_people', true) ?: [];
+    $pre_save_map    = [];
+    foreach ($pre_save_access as $ep) {
+    if (!empty($ep['email'])) $pre_save_map[trim($ep['email'])] = $ep;
+    }
+
     // JSON sections — reuse already-decoded values to avoid double json_decode
     $json_sections = [
     'subject', 'children', 'access_people', 'personal_items',
@@ -515,27 +524,25 @@ class LH_Ajax
         }
       }
       update_post_meta($post_id, "_flp_{$sec}", $val);
-      // Ensure every access_person has a stable id, then send emails
       if ($sec === 'access_people' && is_array($val)) {
-        $existing_people = get_post_meta($post_id, '_flp_access_people', true) ?: [];
-        $existing_map = [];
-        foreach ($existing_people as $ep) {
-          if (!empty($ep['email'])) $existing_map[$ep['email']] = $ep;
-        }
+        // Merge pre-save fields (id, user_id, status, email_sent) into incoming rows
         foreach ($val as &$row) {
           $row_email = trim($row['email'] ?? '');
-          // Preserve existing id/user_id/status if email matches
-          if ($row_email && isset($existing_map[$row_email])) {
-            $row['id']      = $row['id'] ?? ($existing_map[$row_email]['id'] ?? uniqid('ap_'));
-            $row['user_id'] = $row['user_id'] ?? ($existing_map[$row_email]['user_id'] ?? 0);
-            $row['status']  = $row['status'] ?? ($existing_map[$row_email]['status'] ?? 'pending');
+          $prev = $pre_save_map[$row_email] ?? null;
+          if ($prev) {
+            $row['id']         = $row['id'] ?: ($prev['id'] ?? uniqid('ap_'));
+            $row['user_id']    = $row['user_id'] ?: ($prev['user_id'] ?? 0);
+            $row['status']     = $row['status'] ?: ($prev['status'] ?? 'pending');
+            // Carry forward email_sent flag so we don't re-email unchanged entries
+            if (!empty($prev['email_sent']) && ($prev['privilege'] ?? '') === ($row['privilege'] ?? ''))
+              $row['email_sent'] = true;
           } else {
             if (empty($row['id'])) $row['id'] = uniqid('ap_');
           }
         }
         unset($row);
         update_post_meta($post_id, "_flp_{$sec}", $val);
-        self::send_delegate_emails($val, $post_id);
+        self::send_delegate_emails($val, $post_id, $pre_save_map);
       }
     }
     }
@@ -1587,6 +1594,45 @@ class LH_Ajax
     wp_send_json_success('Access activated.');
     }
 
+    static function lhp_get_pending_reviews()
+    {
+    self::verify();
+    $uid  = get_current_user_id();
+    $role = LH_Auth::current_role();
+    if (!in_array($role, ['lighthouse_planner','lhp_super_admin','administrator','lighthouse_law_firm']))
+    wp_send_json_error('Access denied.');
+
+    // Find all records where this planner has access and there are pending_review access_people
+    $args = ['post_type' => 'lh_record', 'posts_per_page' => -1, 'fields' => 'ids'];
+    if ($role === 'lighthouse_planner')
+    $args['meta_query'] = [['key' => '_flp_planner_id', 'value' => $uid]];
+
+    $record_ids = get_posts($args);
+    $results = [];
+    foreach ($record_ids as $rid) {
+    $people = get_post_meta($rid, '_flp_access_people', true) ?: [];
+    $owner_id = (int) get_post_meta($rid, '_flp_owner_id', true);
+    $owner = $owner_id ? get_userdata($owner_id) : null;
+    foreach ($people as $p) {
+      if (($p['status'] ?? '') !== 'pending_review') continue;
+      if (!($p['self_activated'] ?? false)) continue;
+      $results[] = [
+        'record_id'    => $rid,
+        'record_title' => self::clean_title($rid),
+        'owner_name'   => $owner ? $owner->display_name : '—',
+        'entry_id'     => $p['id'] ?? '',
+        'person_name'  => $p['full_name'] ?? $p['name'] ?? $p['email'] ?? '—',
+        'person_email' => $p['email'] ?? '',
+        'privilege'    => $p['privilege'] ?? '',
+        'submitted_at' => $p['submitted_at'] ?? '',
+        'death_doc_id'   => $p['death_doc_id'] ?? 0,
+        'death_doc_name' => $p['death_doc_name'] ?? '',
+      ];
+    }
+    }
+    wp_send_json_success($results);
+    }
+
     static function lhp_approve_access_person()
     {
     self::verify();
@@ -1814,7 +1860,7 @@ class LH_Ajax
     }
 
     // Include record if user has access OR has a pending entry (so they know it exists)
-    if (!$has_access && $my_status !== 'pending') continue;
+    if (!$has_access && !in_array($my_status, ['pending', 'pending_review'])) continue;
     if (!$has_access && !$my_entry) continue;
 
     $subject = get_post_meta($rid, '_flp_subject', true) ?: [];
@@ -2374,7 +2420,7 @@ class LH_Ajax
     return $legacy['full_name'] ?? '';
     }
 
-    private static function send_delegate_emails($people, $post_id)
+    private static function send_delegate_emails($people, $post_id, $pre_save_map = [])
     {
     $subject_meta = get_post_meta($post_id, '_flp_subject', true);
     $subject_name = is_array($subject_meta) ? ($subject_meta['full_name'] ?? '') : '';
@@ -2389,14 +2435,6 @@ class LH_Ajax
     'view_after_death' => 'May view interior after the owner passes away',
     ];
 
-    // Load existing stored entries to detect new vs existing (avoid re-emailing)
-    $existing_stored = get_post_meta($post_id, '_flp_access_people', true) ?: [];
-    $existing_by_email = [];
-    foreach ($existing_stored as $ep) {
-    $e = trim($ep['email'] ?? '');
-    if ($e) $existing_by_email[$e] = $ep;
-    }
-
     $updated_people = [];
     foreach ($people as $p) {
     $email     = trim($p['email'] ?? '');
@@ -2408,16 +2446,9 @@ class LH_Ajax
     $priv_text  = $priv_labels[$privilege] ?? $privilege;
     $is_pending = ($privilege === 'view_after_death');
 
-    // Skip email if already notified and email + privilege unchanged
-    $prev = $existing_by_email[$email] ?? null;
-    $already_notified = $prev && !empty($prev['email_sent'])
-      && ($prev['email'] ?? '') === $email
-      && ($prev['privilege'] ?? '') === $privilege;
-    if ($already_notified) {
-      // Carry forward user_id and status; no new email
-      $p['user_id'] = $prev['user_id'] ?? 0;
-      $p['status']  = $prev['status'] ?? ($is_pending ? 'pending' : 'active');
-      $p['email_sent'] = true;
+    // Skip email if already notified for this email+privilege combo
+    // Use the row-level flag set during the pre-save merge above
+    if (!empty($p['email_sent'])) {
       $updated_people[] = $p;
       continue;
     }

@@ -630,12 +630,67 @@
   ═══════════════════════════════════════════════════════ */
   var allRecords = [];
 
+  function loadEPPendingReviews() {
+    var $list = $("#ep-reviews-list");
+    $list.html('<div class="text-center py-5 text-muted"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…</div>');
+    ajax("lhp_get_pending_reviews", {}, function(items) {
+      var badge = $("#ep-reviews-badge");
+      if (!items.length) {
+        badge.addClass("d-none");
+        $list.html('<div class="lhp-empty-state"><i class="bi bi-shield-check"></i><h3>No Pending Reviews</h3><p class="text-muted">When clients submit death verification documents, they appear here for your approval.</p></div>');
+        return;
+      }
+      badge.text(items.length).removeClass("d-none");
+      var html = items.map(function(item) {
+        return '<div class="lhp-section-card mb-3 p-4">' +
+          '<div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">' +
+          '<div>' +
+            '<div class="fw-bold">' + esc(item.person_name) + '</div>' +
+            '<div class="text-muted small">Record: ' + esc(item.record_title) + ' · Owner: ' + esc(item.owner_name) + '</div>' +
+            '<div class="text-muted small">Submitted: ' + esc(item.submitted_at || '—') + '</div>' +
+            (item.death_doc_name ? '<div class="small mt-1"><i class="bi bi-paperclip me-1"></i><strong>' + esc(item.death_doc_name) + '</strong></div>' : '') +
+          '</div>' +
+          '<div class="d-flex gap-2">' +
+            '<button class="btn btn-success btn-sm ep-approve-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '"><i class="bi bi-check-circle me-1"></i>Approve</button>' +
+            '<button class="btn btn-outline-danger btn-sm ep-reject-btn" data-id="' + esc(item.entry_id) + '" data-rid="' + esc(String(item.record_id)) + '" data-name="' + esc(item.person_name) + '"><i class="bi bi-x-circle me-1"></i>Reject</button>' +
+          '</div></div></div>';
+      }).join('');
+      $list.html(html);
+    }, function() {
+      $list.html('<div class="alert alert-danger">Failed to load pending reviews.</div>');
+    });
+  }
+
   function initEPDashboard() {
     try {
     initSidebar();
     loadEPProfile();
     loadEPLinks();
     loadEPUniqueLink();
+    loadEPPendingReviews();
+
+    // Pending review approve
+    $(document).on("click", ".ep-approve-btn", function () {
+      var $btn = $(this), id = $btn.data("id"), rid = parseInt($btn.data("rid")), name = $btn.data("name");
+      if (!confirm("Approve access for " + name + "? They will receive an email and can view the Lighthouse immediately.")) return;
+      $btn.prop("disabled", true);
+      ajax("lhp_approve_access_person", { record_id: rid, entry_id: id },
+        function () { toast(name + " approved — access granted.", "success"); loadEPPendingReviews(); },
+        function (m) { toast(m, "error"); $btn.prop("disabled", false); }
+      );
+    });
+
+    // Pending review reject
+    $(document).on("click", ".ep-reject-btn", function () {
+      var $btn = $(this), id = $btn.data("id"), rid = parseInt($btn.data("rid")), name = $btn.data("name");
+      var reason = prompt("Reason for rejecting " + name + "'s request (sent to them by email):");
+      if (reason === null) return;
+      $btn.prop("disabled", true);
+      ajax("lhp_reject_access_person", { record_id: rid, entry_id: id, reason: reason },
+        function () { toast(name + " rejected — document not accepted.", "info"); loadEPPendingReviews(); },
+        function (m) { toast(m, "error"); $btn.prop("disabled", false); }
+      );
+    });
 
     // Copy permanent welcome link
     $(document).off("click","#ep-copy-unique-link").on("click","#ep-copy-unique-link", function() {
