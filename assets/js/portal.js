@@ -104,12 +104,12 @@
       '<div id="' +
         id +
         '" class="toast align-items-center border-0 shadow" role="alert" style="min-width:280px">' +
-        '<div class="d-flex"><div class="toast-body d-flex align-items-center gap-2">' +
+        '<div class="d-flex align-items-start"><div class="toast-body d-flex align-items-center gap-2 flex-grow-1">' +
         '<i class="bi ' +
         (icons[type] || icons.info) +
         '"></i>' +
         esc(msg) +
-        '</div><button type="button" class="btn-close ms-2 me-2 flex-shrink-0 align-self-center" data-bs-dismiss="toast"></button></div></div>',
+        '</div><button type="button" class="btn-close ms-2 me-2 flex-shrink-0 align-self-start lhp-toast-close" data-bs-dismiss="toast"></button></div></div>',
     );
     var el = document.getElementById(id);
     if (el) {

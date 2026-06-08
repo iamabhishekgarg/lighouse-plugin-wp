@@ -120,11 +120,11 @@
           </button>
         </div>
 
-        <p class="text-center text-muted" style="font-size:14px">
-          <a href="#" id="lhp-back-to-login" class="lhp-link">
-            <i class="bi bi-arrow-left me-1"></i>Back to Sign In
+        <div class="d-grid mt-2">
+          <a href="#" id="lhp-back-to-login" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-arrow-left me-2"></i>Back to Sign In
           </a>
-        </p>
+        </div>
       </div><!-- /#lhp-forgot-panel -->
 
       <!-- ── RESET PASSWORD PANEL ── -->
@@ -170,11 +170,11 @@
           </button>
         </div>
 
-        <p class="text-center text-muted" style="font-size:14px">
-          <a href="#" id="lhp-back-to-login-reset" class="lhp-link">
-            <i class="bi bi-arrow-left me-1"></i>Back to Sign In
+        <div class="d-grid mt-2">
+          <a href="#" id="lhp-back-to-login-reset" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-arrow-left me-2"></i>Back to Sign In
           </a>
-        </p>
+        </div>
 
         <input type="hidden" id="reset-key" value="">
         <input type="hidden" id="reset-login" value="">

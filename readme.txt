@@ -4,12 +4,16 @@ Tags: estate planner, lighthouse, family portal, will, legacy
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.9.4
+Stable tag: 1.9.5
 License: GPLv2 or later
 
 Role-based frontend portal for Estate Planners and families.
 
 == Changelog ==
+
+= 1.9.5 - 2026-06-08 =
+* Fixed #2: Toast close (X) icon now consistently anchored to top-right corner — changed flex alignment from center to start; added top margin; scoped to `.lhp-toast-close` class
+* Fixed #3: "Back to Sign In" button now matches size of "Sign In" and "Send Reset Link" — changed from small `lhp-link` anchor to full `btn btn-outline-secondary btn-lg` on both forgot and reset panels
 
 = 1.9.4 - 2026-06-08 =
 * Fixed #1: Full Name field now rejects numeric-only and special-char-only values on registration (both Parent and Planner) — new `isName()` regex validator

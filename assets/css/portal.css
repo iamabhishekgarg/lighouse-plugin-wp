@@ -1926,7 +1926,7 @@
   padding: 12px 14px;
   line-height: 1.4;
 }
-.lhp-toast-container .btn-close {
+.lhp-toast-container .lhp-toast-close {
   width: 28px;
   height: 28px;
   min-width: 28px;
@@ -1938,11 +1938,12 @@
   background-repeat: no-repeat;
   filter: none;
   opacity: 1;
-  margin-right: 12px !important;
+  margin-top: 10px !important;
+  margin-right: 10px !important;
   margin-left: 0 !important;
   flex-shrink: 0;
 }
-.lhp-toast-container .btn-close:hover {
+.lhp-toast-container .lhp-toast-close:hover {
   background-color: var(--lhp-primary-d);
 }
 
