@@ -3,14 +3,14 @@
  * Plugin Name:  Lighthouse Portal
  * Plugin URI:   https://lighthouse.reckoningitsol.com
  * Description:  Role-based frontend portal for Estate Planners and Parent/Family Members.
- * Version:      1.9.2
+ * Version:      1.9.3
  * Author:       Reckoning IT Solutions
  * Text Domain:  lighthouse-portal
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LHP_VERSION',  '1.9.2' );
+define( 'LHP_VERSION',  '1.9.3' );
 define( 'LHP_DIR',      plugin_dir_path( __FILE__ ) );
 define( 'LHP_URL',      plugin_dir_url( __FILE__ ) );
 define( 'LHP_FILE',     __FILE__ );

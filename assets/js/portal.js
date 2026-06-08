@@ -2726,7 +2726,16 @@
           toast("Each beneficiary needs Full Name, Relationship, and either an Email/Phone or 'Prefer not to include' checked.", "error");
           return;
         }
-        p.children = JSON.stringify(getTableData("children-body"));
+        var savedChildren = getTableData("children-body").filter(function(r) { return r.full_name; });
+        p.children = JSON.stringify(savedChildren);
+        // Sync matching names in Access & Unlock (email + phone only)
+        if (myData.access_people && myData.access_people.length) {
+          var syncedAccess = myData.access_people.map(function(ap) {
+            var match = savedChildren.filter(function(c) { return c.full_name && c.full_name === ap.full_name; })[0];
+            return match ? Object.assign({}, ap, { email: match.email || ap.email, phone: match.phone || ap.phone }) : ap;
+          });
+          p.access_people = JSON.stringify(syncedAccess);
+        }
         break;
       case "access":
         var accessCheck = validateAccessRows("access-body");
@@ -2734,7 +2743,16 @@
           toast(accessCheck.messages[0] || "Please complete all required Access & Unlock fields.", "error");
           return;
         }
-        p.access_people = JSON.stringify(getTableData("access-body"));
+        var savedAccess = getTableData("access-body");
+        p.access_people = JSON.stringify(savedAccess);
+        // Sync matching names in Beneficiaries (email + phone only)
+        if (myData.children && myData.children.length) {
+          var syncedChildren = myData.children.map(function(c) {
+            var match = savedAccess.filter(function(ap) { return ap.full_name && ap.full_name === c.full_name; })[0];
+            return match ? Object.assign({}, c, { email: match.email || c.email, phone: match.phone || c.phone }) : c;
+          });
+          p.children = JSON.stringify(syncedChildren);
+        }
         break;
       case "personal_items":
         p.personal_items = JSON.stringify(getTableData("items-body"));
@@ -3331,7 +3349,8 @@
             },
           );
         });
-      // File upload
+      // File upload — delegated users cannot upload or delete
+      if (cfg.role === 'lighthouse_delegated') return;
       $(document)
         .off("change", "#rd-file-input")
         .on("change", "#rd-file-input", function () {
@@ -3617,22 +3636,34 @@
     var letDocFiles  = allDocs.filter(function(doc) { return doc._section === 'letters'; });
     function docListHtml(docs) {
       var olDoc = getOwnerLabels();
-      return '<ul class="list-unstyled mb-0">' + docs.map(function(doc) {
+      return '<ul class="list-unstyled mb-0 lhp-doc-list">' + docs.map(function(doc) {
         var ownerLabel = doc.owner === "both" ? olDoc.both : (doc.owner === "owner1" ? olDoc.o1 : (doc.owner === "owner2" ? olDoc.o2 : (doc.owner || '')));
-        return '<li class="small mb-1"><i class="bi bi-paperclip me-1"></i><strong>' + esc(doc.name) + '</strong>' +
-          (doc.recipient ? ' <span class="text-muted"><strong>For:</strong> ' + esc(doc.recipient) + '</span>' : '') +
-          (ownerLabel ? ' <span class="text-muted"> · <strong>From:</strong> ' + esc(ownerLabel) + '</span>' : '') + '</li>';
+        return '<li class="lhp-doc-list-item">' +
+          '<i class="bi bi-paperclip lhp-doc-list-icon"></i>' +
+          '<span class="lhp-doc-list-name">' + esc(doc.name) + '</span>' +
+          '<span class="lhp-doc-list-meta">' +
+          (doc.recipient ? '<span class="lhp-role-tag lhp-role-tag-to"><i class="bi bi-person-fill me-1"></i>Recipient: ' + esc(doc.recipient) + '</span>' : '') +
+          (ownerLabel ? '<span class="lhp-role-tag lhp-role-tag-from"><i class="bi bi-pencil-fill me-1"></i>From: ' + esc(ownerLabel) + '</span>' : '') +
+          '</span>' +
+          '</li>';
       }).join('') + '</ul>';
     }
     var olL = { o1: (d.owner_name || '').split(' ')[0] || 'Owner 1', o2: (d.owner2_name || '').split(' ')[0] || 'Owner 2' };
     olL.both = olL.o1 + ' & ' + olL.o2;
     var textLettersHtml = (d.letters && d.letters.length)
       ? (d.letters || []).map(function (l) {
+            var ownerName = l.owner === 'both' ? olL.o1 + ' & ' + olL.o2 : (olL[l.owner] || l.owner || '');
             return (
               '<div class="lhp-letter-item">' +
-              '<div class="lhp-letter-to">' +
-              '<span><i class="bi bi-envelope-fill me-1"></i><strong>To:</strong> ' + esc(l.recipient) + '</span>' +
-              (l.owner ? '<span class="lhp-letter-from text-muted small"><strong>From:</strong> ' + esc(l.owner === 'both' ? olL.o1 + ' & ' + olL.o2 : olL[l.owner] || l.owner) + '</span>' : '') +
+              '<div class="lhp-letter-roles">' +
+              '<div class="lhp-letter-role-row">' +
+              '<span class="lhp-role-tag lhp-role-tag-to"><i class="bi bi-person-fill me-1"></i>Recipient</span>' +
+              '<span class="lhp-letter-role-name">' + esc(l.recipient || '—') + '</span>' +
+              '</div>' +
+              (ownerName ? '<div class="lhp-letter-role-row">' +
+              '<span class="lhp-role-tag lhp-role-tag-from"><i class="bi bi-pencil-fill me-1"></i>Written by</span>' +
+              '<span class="lhp-letter-role-name">' + esc(ownerName) + '</span>' +
+              '</div>' : '') +
               '</div>' +
               '<div class="lhp-letter-body">' +
               esc(l.content || "(no content)") +
@@ -3700,16 +3731,19 @@
     );
   }
   function buildRDDocs(data, recordId) {
-    return (
-      '<div id="rd-docs-list" class="mb-3">' +
-      renderDocs(data.docs || [], recordId) +
-      "</div>" +
+    var isDelegated = cfg.role === 'lighthouse_delegated';
+    var uploadZone = isDelegated ? '' :
       '<div class="lhp-upload-zone" id="rd-upload-zone">' +
       '<i class="bi bi-cloud-arrow-up-fill"></i>' +
       '<div class="mt-2 fw-semibold">Drag &amp; drop or click to select files</div>' +
       '<small class="text-muted">JPG, PNG, PDF, DOC — Max 10MB</small>' +
       '<input type="file" id="rd-file-input" class="d-none" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">' +
-      "</div>"
+      '</div>';
+    return (
+      '<div id="rd-docs-list" class="mb-3">' +
+      renderDocs(data.docs || [], recordId) +
+      "</div>" +
+      uploadZone
     );
   }
   function renderNotes(notes) {
@@ -3735,6 +3769,7 @@
   function renderDocs(docs, recordId) {
     if (!docs || !docs.length)
       return '<p class="text-muted small text-center py-2">No documents uploaded yet.</p>';
+    var isDelegated = cfg.role === 'lighthouse_delegated';
     return docs
       .map(function (d) {
         var icon =
@@ -3760,9 +3795,7 @@
           '<a href="' +
           d.url +
           '" download="' + esc(d.name) + '" target="_blank" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>' +
-          '<button class="btn btn-sm btn-outline-danger rd-del-file" data-att="' +
-          d.id +
-          '" title="Delete"><i class="bi bi-trash"></i></button>' +
+          (isDelegated ? '' : '<button class="btn btn-sm btn-outline-danger rd-del-file" data-att="' + d.id + '" title="Delete"><i class="bi bi-trash"></i></button>') +
           "</div></div>"
         );
       })
@@ -5217,6 +5250,23 @@
     }
     window.addEventListener("resize", lhpApplyHeaderOffset);
   }
+
+  // ── Portal footer ──
+  (function injectFooter() {
+    function doInject() {
+      if (document.querySelector('.lhp-portal-footer')) return;
+      if (!document.querySelector('.lhp-root')) return;
+      var footer = document.createElement('div');
+      footer.className = 'lhp-portal-footer';
+      footer.innerHTML = 'Questions or support: <a href="tel:8323175533" class="lhp-footer-link">832-317-5533</a>';
+      document.body.appendChild(footer);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doInject);
+    } else {
+      doInject();
+    }
+  })();
 
   // ── Global function exports (fallback for onclick attributes) ──
   window.lhpOpenClientModal = function (id) {

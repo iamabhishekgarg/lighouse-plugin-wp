@@ -4,12 +4,18 @@ Tags: estate planner, lighthouse, family portal, will, legacy
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.9.2
+Stable tag: 1.9.3
 License: GPLv2 or later
 
 Role-based frontend portal for Estate Planners and families.
 
 == Changelog ==
+
+= 1.9.3 - 2026-06-08 =
+* Fixed: Letters & Messages read-only view — sender/recipient labels ambiguous (`· Robin.` format); replaced with explicit colour-coded pill badges: blue "Recipient" + purple "Written by" on letters; "Recipient:" + "From:" badges on file attachments
+* Fixed: Delegated users could see upload zone and delete button in Documents tab of record detail modal — upload zone, file input, and delete buttons now hidden; upload + delete event handlers skipped entirely for `lighthouse_delegated` role
+* Added: Bidirectional contact sync between Beneficiaries and Access & Unlock sections — saving either section propagates matching `full_name` email + phone to the other; only contact fields sync, not privilege/relationship
+* Added: Portal footer on all dashboard pages — "Questions or support: 832-317-5533" with `background: #161C52`, white text; injected as `position: fixed` via JS; `.lhp-main-content` gets `padding-bottom: 50px` to prevent overlap
 
 = 1.9.2 - 2026-06-01 =
 * Fixed: "Prefer not to include" toggle unchecked on form re-open — `repForm()` builds rows as raw HTML strings so DOM post-processing never ran; fix bakes `checked` + `is-checked` class directly into HTML string inside `buildRowHtml()`
