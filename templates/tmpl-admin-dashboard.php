@@ -2,7 +2,7 @@
 // Access controlled by class-lh-auth.php template_redirect
 $user = wp_get_current_user();
 $role = LH_Auth::current_role();
-$initials   = strtoupper( substr( $user->display_name, 0, 1 ) );
+$initials   = strtoupper(implode('', array_map(function($w){ return substr($w,0,1); }, preg_split('/\s+/', trim($user->display_name)))));
 $first_name = get_user_meta( $user->ID, 'first_name', true ) ?: explode( ' ', trim( $user->display_name ) )[0];
 $is_super  = in_array( $role, [ 'lhp_super_admin', 'administrator' ] );
 ?>

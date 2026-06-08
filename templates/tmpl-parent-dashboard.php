@@ -1,6 +1,6 @@
 <?php
 $user      = wp_get_current_user();
-$initials   = strtoupper(substr($user->display_name,0,1));
+$initials   = strtoupper(implode('', array_map(function($w){ return substr($w,0,1); }, preg_split('/\s+/', trim($user->display_name)))));
 $first_name = get_user_meta($user->ID,'first_name',true) ?: explode(' ',trim($user->display_name))[0];
 // Fetch record — check primary owner first, then co-owner (owner2)
 $all_recs = get_posts([
@@ -141,6 +141,30 @@ if ($planner_id) {
             <div class="mb-3"><label class="form-label fw-semibold" for="ppar-phone">Phone</label><div class="input-group"><span class="input-group-text"><i class="bi bi-telephone"></i></span><input type="tel" class="form-control" id="ppar-phone"></div></div>
             <button class="btn lhp-btn-primary-solid" id="lhp-save-pprofile"><i class="bi bi-check-circle me-2"></i>Save Profile</button>
             <button class="btn btn-outline-danger btn-sm ms-2" id="lhp-delete-my-account"><i class="bi bi-trash me-1"></i>Delete My Account</button>
+
+            <hr class="my-3">
+            <div class="lhp-card-section-title mb-3"><i class="bi bi-lock-fill me-2"></i>Change Password</div>
+            <div id="ppar-pass-form">
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="ppar-new-pass">New Password</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                  <input type="password" class="form-control" id="ppar-new-pass" placeholder="Min. 8 characters" autocomplete="new-password">
+                  <button class="btn btn-outline-secondary lhp-toggle-pass" type="button" data-target="ppar-new-pass" tabindex="-1"><i class="bi bi-eye"></i></button>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="ppar-confirm-pass">Confirm Password</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                  <input type="password" class="form-control" id="ppar-confirm-pass" placeholder="Repeat new password" autocomplete="new-password">
+                  <button class="btn btn-outline-secondary lhp-toggle-pass" type="button" data-target="ppar-confirm-pass" tabindex="-1"><i class="bi bi-eye"></i></button>
+                </div>
+              </div>
+              <div class="alert alert-danger d-none py-2 small" id="ppar-pass-error" role="alert"></div>
+              <div class="alert alert-success d-none py-2 small" id="ppar-pass-success" role="status"></div>
+              <button class="btn lhp-btn-primary-solid btn-sm" id="lhp-change-pass"><i class="bi bi-lock-fill me-2"></i>Update Password</button>
+            </div>
           </div>
         </div>
 

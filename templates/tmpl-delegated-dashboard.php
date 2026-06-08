@@ -1,6 +1,6 @@
 <?php
 $user     = wp_get_current_user();
-$initials   = strtoupper(substr($user->display_name,0,1));
+$initials   = strtoupper(implode('', array_map(function($w){ return substr($w,0,1); }, preg_split('/\s+/', trim($user->display_name)))));
 $first_name = get_user_meta($user->ID,'first_name',true) ?: explode(' ',trim($user->display_name))[0];
 
 $lhp_invited_by    = esc_js( get_user_meta($user->ID,'_flp_invited_by_name',true) ?: '' );

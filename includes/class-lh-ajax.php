@@ -5,7 +5,7 @@ class LH_Ajax
 
     static function init()
     {
-    $nopriv = ['lhp_register', 'lhp_login', 'lhp_forgot_password', 'lhp_reset_password', 'lhp_register_via_invite', 'lhp_register_via_ep_link', 'lhp_verify_ep_otp'];
+    $nopriv = ['lhp_register', 'lhp_login', 'lhp_forgot_password', 'lhp_reset_password', 'lhp_validate_reset_key', 'lhp_register_via_invite', 'lhp_register_via_ep_link', 'lhp_verify_ep_otp'];
     $priv = [
       'lhp_logout',
       'lhp_get_records',
@@ -340,6 +340,17 @@ class LH_Ajax
     ]);
     }
 
+    /* ── VALIDATE RESET KEY (page-load check) ──────────── */
+    static function lhp_validate_reset_key()
+    {
+    $key   = sanitize_text_field($_POST['key']   ?? '');
+    $login = sanitize_text_field($_POST['login'] ?? '');
+    if (!$key || !$login) wp_send_json_error('Invalid reset link.');
+    $user = check_password_reset_key($key, $login);
+    if (is_wp_error($user)) wp_send_json_error('This reset link has expired or is invalid. Please request a new one.');
+    wp_send_json_success();
+    }
+
     /* ── LOGOUT ────────────────────────────────────────── */
     static function lhp_logout()
     {
@@ -484,6 +495,15 @@ class LH_Ajax
     }
     }
 
+    // Concurrency guard — #14: reject if client timestamp is stale
+    if (!$is_new && isset($_POST['client_updated_at'])) {
+        $client_ts = intval($_POST['client_updated_at']);
+        $server_ts = (int) get_post_meta($post_id, '_flp_updated_at', true);
+        if ($server_ts && $client_ts && $client_ts < $server_ts) {
+            wp_send_json_error('This record was updated by another user. Please refresh the page to see the latest changes before saving.');
+        }
+    }
+
     // Pre-decode and validate subject before the save loop
     $decoded_sections = [];
     if (isset($_POST['subject'])) {
@@ -519,11 +539,29 @@ class LH_Ajax
       if (in_array($sec, ['children', 'access_people']) && is_array($val)) {
         foreach ($val as $row) {
           $row_email = trim($row['email'] ?? '');
-          if ($row_email && $row_email !== '__optout__' && !is_email($row_email))
-            wp_send_json_error('Invalid email in ' . str_replace('_', ' ', $sec) . '.');
+          if ($row_email && $row_email !== '__optout__' && !is_email($row_email)) {
+            $sec_label = $sec === 'children' ? 'Beneficiaries' : str_replace('_', ' ', $sec);
+            wp_send_json_error('Invalid email in ' . $sec_label . '.');
+          }
         }
       }
       update_post_meta($post_id, "_flp_{$sec}", $val);
+      // #19 — when beneficiaries saved, clear personal_items recipients no longer in the list
+      if ($sec === 'children' && is_array($val)) {
+        $valid_names = array_map(function($c){ return trim($c['full_name'] ?? ''); }, $val);
+        $valid_names = array_filter($valid_names);
+        $items = get_post_meta($post_id, '_flp_personal_items', true) ?: [];
+        $updated = false;
+        foreach ($items as &$item) {
+          $r = trim($item['recipient'] ?? '');
+          if ($r && !in_array('Everyone', [$r]) && !in_array($r, $valid_names)) {
+            $item['recipient'] = '';
+            $updated = true;
+          }
+        }
+        unset($item);
+        if ($updated) update_post_meta($post_id, '_flp_personal_items', $items);
+      }
       if ($sec === 'access_people' && is_array($val)) {
         // Merge pre-save fields (id, user_id, status, email_sent) into incoming rows
         foreach ($val as &$row) {
@@ -571,8 +609,10 @@ class LH_Ajax
     $pct = self::calc_completion($post_id);
     update_post_meta($post_id, '_flp_completion', $pct);
     update_post_meta($post_id, '_flp_status', $pct >= 100 ? 'complete' : 'draft');
+    $now = time();
+    update_post_meta($post_id, '_flp_updated_at', $now);
 
-    wp_send_json_success(['record_id' => $post_id, 'completion' => $pct]);
+    wp_send_json_success(['record_id' => $post_id, 'completion' => $pct, 'updated_at' => $now]);
     }
 
     /* ── DELETE RECORD ─────────────────────────────────── */
@@ -1009,6 +1049,15 @@ class LH_Ajax
 
     if ($_FILES['file']['size'] > 10 * 1024 * 1024)
     wp_send_json_error('File too large. Maximum size is 10MB.');
+
+    // #21 — validate PDF integrity by checking magic bytes
+    if ($file_info['ext'] === 'pdf') {
+        $handle = fopen($_FILES['file']['tmp_name'], 'rb');
+        $header = $handle ? fread($handle, 5) : '';
+        if ($handle) fclose($handle);
+        if (strpos($header, '%PDF-') !== 0)
+            wp_send_json_error('The PDF file appears to be corrupted or invalid. Please check the file and try again.');
+    }
 
     // Skip thumbnail generation — these are document attachments, not gallery images
     add_filter('intermediate_image_sizes_advanced', '__return_empty_array', 99);
@@ -1771,6 +1820,7 @@ class LH_Ajax
     if ($existing_user) {
       $msg .= "Login here to view the Lighthouse:\r\n{$login_url}\r\n";
       $msg .= "  Email: {$email}\r\n\r\n";
+      $msg .= "If you don't have an account yet, visit {$login_url} and click \"Create one free\" to register.\r\n\r\n";
     } else {
       // Create account and send credentials
       $temp_pass = wp_generate_password(10, false);
@@ -1806,7 +1856,7 @@ class LH_Ajax
         $msg .= "Login here: {$login_url}\r\n";
         $msg .= "Please change your password after first login.\r\n\r\n";
       } else {
-        $msg .= "Create your free account to view the Lighthouse:\r\n{$register_url}\r\n\r\n";
+        $msg .= "If you don't have an account yet, visit {$login_url} and click \"Create one free\" to register.\r\n\r\n";
       }
     }
 
@@ -2637,6 +2687,12 @@ class LH_Ajax
         foreach ($o2_records->posts as $rid) {
             delete_post_meta($rid, '_flp_owner2_id');
             delete_post_meta($rid, '_flp_owner2');
+            // #22 — clear owner2 burial prefs so new co-owner gets a blank form
+            $burial = get_post_meta($rid, '_flp_burial', true) ?: [];
+            if (isset($burial['owner2'])) {
+                unset($burial['owner2']);
+                update_post_meta($rid, '_flp_burial', $burial);
+            }
         }
 
         // Reassign records to admin if the target owns any records
@@ -2645,6 +2701,28 @@ class LH_Ajax
         wp_delete_user($target_id, $reassign);
 
         self::log_activity('user_deleted', "Profile deleted: {$target_name} (ID {$target_id})" . ($is_self ? ' [self]' : ' by ' . wp_get_current_user()->display_name));
+
+        // Notify primary owner(s) when co-owner deletes their own account — #8
+        if ($is_self && !empty($o2_records->posts)) {
+            $notified_owners = [];
+            foreach ($o2_records->posts as $rid) {
+                $owner1_id = (int) get_post_meta($rid, '_flp_owner_id', true);
+                if (!$owner1_id || in_array($owner1_id, $notified_owners)) continue;
+                $notified_owners[] = $owner1_id;
+                $owner1 = get_userdata($owner1_id);
+                if (!$owner1 || !$owner1->user_email) continue;
+                $site = get_bloginfo('name');
+                wp_mail(
+                    $owner1->user_email,
+                    "Family Lighthouse — Co-owner Account Deleted",
+                    "Hello {$owner1->display_name},\r\n\r\n" .
+                    "{$target_name} has deleted their co-owner account on your Family Lighthouse record.\r\n\r\n" .
+                    "Their End of Life Preferences and account details have been removed.\r\n\r\n" .
+                    "If this was unexpected, please log in to review your record:\r\n" . lhp_page_url('parent_dashboard') . "\r\n\r\n" .
+                    "— The {$site} Team"
+                );
+            }
+        }
 
         if ($is_self) {
             wp_logout();

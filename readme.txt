@@ -4,12 +4,34 @@ Tags: estate planner, lighthouse, family portal, will, legacy
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.9.3
+Stable tag: 1.9.4
 License: GPLv2 or later
 
 Role-based frontend portal for Estate Planners and families.
 
 == Changelog ==
+
+= 1.9.4 - 2026-06-08 =
+* Fixed #1: Full Name field now rejects numeric-only and special-char-only values on registration (both Parent and Planner) — new `isName()` regex validator
+* Fixed #4: Login button stuck in "Signing in…" state after browser back-navigation — `pageshow` event resets button and `_loginInFlight` flag
+* Fixed #5: Initials badge shows only first letter instead of full initials (e.g. "S" not "SK") — all 4 dashboard templates now derive initials from all words; JS post-save update matches
+* Fixed #6: Expired/invalid reset link showed password form before token validation — new `lhp_validate_reset_key` AJAX action checks token on page load; form hidden, error shown immediately if invalid
+* Fixed #7: Co-owner had no Change Password UI after login — added Change Password section to parent dashboard profile tab; works for both primary and co-owner
+* Fixed #8: No notification sent to primary user when co-owner deletes their account — `lhp_owner_delete_profile` now emails primary owner(s) on self-delete
+* Fixed #9: Beneficiaries validation error showed "Invalid email in children" — now shows "Invalid email in Beneficiaries"
+* Fixed #10: Optional phone field accepted invalid formats in Beneficiaries — phone now runs `isPhone()` validation when provided
+* Fixed #11: Default beneficiary row was deletable leaving empty state — remove button blocked when only one row remains in any repeater table
+* Fixed #12: Save Changes triggered loader on empty Beneficiaries form without validation — requires at least one filled row before AJAX fires
+* Fixed #13: Modal close (X) button disappeared after dismissing validation toast — empty `.lhp-toast-container` removed from DOM after last toast exits, no longer intercepts clicks
+* Fixed #14: Concurrent saves by two users caused last-write-wins data loss — `_flp_updated_at` timestamp stamped on every save; incoming save rejected if client timestamp is stale
+* Fixed #15: Duplicate Access & Unlock entries (same name + email) were saveable — deduplicated on save with info toast
+* Fixed #16: Registration email copy improved — "If you don't have an account yet, visit [login] and click 'Create one free' to register."
+* Fixed #17: Beneficiaries allowed duplicate email or phone — blocked on save with specific error message
+* Fixed #18: Personal Items saveable without selecting a beneficiary — recipient field now required when row has any data
+* Fixed #19: Deleted beneficiary remained assigned in Personal Items — saving Beneficiaries section clears `recipient` in Personal Items where name no longer exists
+* Fixed #20: Item Description not mandatory in Personal Items — description field now required when row has any data
+* Fixed #21: Corrupted PDF accepted in Letters & Messages upload — server-side magic byte check (`%PDF-`) rejects non-PDF files masquerading as PDFs
+* Fixed #22: Deleted co-owner's End of Life Preferences carried over to new co-owner — `_flp_burial.owner2` cleared when co-owner is deleted
 
 = 1.9.3 - 2026-06-08 =
 * Fixed: Letters & Messages read-only view — sender/recipient labels ambiguous (`· Robin.` format); replaced with explicit colour-coded pill badges: blue "Recipient" + purple "Written by" on letters; "Recipient:" + "From:" badges on file attachments

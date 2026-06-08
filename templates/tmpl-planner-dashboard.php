@@ -2,7 +2,7 @@
 $user        = wp_get_current_user();
 $firm        = get_user_meta($user->ID,'_flp_firm_name',true);
 $ep_subtitle = $firm ?: 'Estate Planner';
-$initials    = strtoupper(substr($user->display_name,0,1));
+$initials    = strtoupper(implode('', array_map(function($w){ return substr($w,0,1); }, preg_split('/\s+/', trim($user->display_name)))));
 $first_name  = get_user_meta($user->ID,'first_name',true) ?: explode(' ',trim($user->display_name))[0];
 $logo_id     = (int) get_user_meta($user->ID,'_flp_logo_id',true);
 $logo_url    = $logo_id ? wp_get_attachment_url($logo_id) : '';

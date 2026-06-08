@@ -117,6 +117,7 @@
       t.show();
       el.addEventListener("hidden.bs.toast", function () {
         $(this).remove();
+        if ($ct.is(':empty')) $ct.remove();
       });
     }
   }
@@ -144,6 +145,9 @@
 
   function isEmail(e) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(e).trim());
+  }
+  function isName(n) {
+    return /^[a-zA-ZÀ-ÖØ-öø-ÿ'\-\. ]{2,}$/.test(String(n).trim());
   }
   function esc(s) {
     return String(s || "")
@@ -387,6 +391,13 @@
     $(document).on("keydown", "#login-email, #login-pass", function (e) {
       if (e.key === "Enter") doLogin();
     });
+    // Reset button state on back-nav (bfcache restore) — #4
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted || (window.performance && window.performance.getEntriesByType("navigation")[0] && window.performance.getEntriesByType("navigation")[0].type === "back_forward")) {
+        btnLoad($("#lhp-login-btn"), false);
+        _loginInFlight = false;
+      }
+    });
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -458,11 +469,24 @@
   function initResetPassword() {
     var params = new URLSearchParams(window.location.search);
     if (params.get("action") === "reset" && params.get("key") && params.get("login")) {
+      var _key   = params.get("key");
+      var _login = params.get("login");
       $("#lhp-login-panel, #lhp-forgot-panel, #lhp-forgot-success").hide();
-      $("#lhp-reset-panel").show();
-      $("#reset-key").val(params.get("key"));
-      $("#reset-login").val(params.get("login"));
-      $("#reset-pass").trigger("focus");
+      // Validate token immediately before showing form — #6
+      ajax("lhp_validate_reset_key", { key: _key, login: _login },
+        function () {
+          $("#lhp-reset-panel").show();
+          $("#reset-key").val(_key);
+          $("#reset-login").val(_login);
+          $("#reset-pass").trigger("focus");
+        },
+        function (msg) {
+          $("#lhp-reset-panel").html(
+            '<div class="alert alert-danger mt-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>' + esc(msg) + '</div>' +
+            '<div class="text-center mt-3"><a href="' + esc(cfg.login_url || '#') + '" class="lhp-link">Back to Login</a></div>'
+          ).show();
+        }
+      );
     }
 
     function doReset() {
@@ -551,6 +575,11 @@
         showAlert("#planner-alert", "Please fill in all required fields.");
         return;
       }
+      if (!isName(d.full_name)) {
+        showAlert("#planner-alert", "Full Name must contain only letters, spaces, hyphens, or apostrophes.");
+        $("#planner-name").addClass("is-invalid").focus();
+        return;
+      }
       if (!isEmail(d.email)) {
         showAlert("#planner-alert", "Please enter a valid email.");
         return;
@@ -601,6 +630,7 @@
         invite_token: $("#par-invite-token").val() || "",
       };
       if (!d.full_name) { showAlert("#par-alert", "Full Name is required."); $("#par-name").addClass("is-invalid").focus(); return; }
+      if (!isName(d.full_name)) { showAlert("#par-alert", "Full Name must contain only letters, spaces, hyphens, or apostrophes."); $("#par-name").addClass("is-invalid").focus(); return; }
       if (!d.email)     { showAlert("#par-alert", "Email Address is required."); $("#par-email").addClass("is-invalid").focus(); return; }
       if (!isEmail(d.email)) { showAlert("#par-alert", "Please enter a valid email."); $("#par-email").addClass("is-invalid").focus(); return; }
       if (!/^\d{10}$/.test(d.phone)) { showAlert("#par-alert", "Mobile Phone must be exactly 10 digits."); $("#par-phone").addClass("is-invalid").focus(); return; }
@@ -1850,6 +1880,8 @@
       addRow($(this).data("table"));
     });
     $(document).off("click", ".lhp-remove-row").on("click", ".lhp-remove-row", function () {
+      var $tbody = $(this).closest("tbody");
+      if ($tbody.find("tr").length <= 1) return; // keep at least one row
       $(this).closest("tr").remove();
     });
     $(document).on(
@@ -1890,6 +1922,7 @@
       { record_id: recordId },
       function (data) {
         myData = data;
+        if (data.updated_at) myData._updated_at = data.updated_at;
         currentBeneficiaries = data.children || [];
         computeOwnerLabels(data);
         updateRings(data.completion);
@@ -2652,6 +2685,7 @@
     }
     var $btn = $("#lhp-save-section"); // ← moved before switch
     var p = { record_id: recordId };
+    if (myData && myData._updated_at) p.client_updated_at = myData._updated_at;
     switch (currentSection) {
       case "subject":
         // Relationship required
@@ -2694,6 +2728,17 @@
         });
         break;
       case "children":
+        var anyRowFilled = false;
+        $("#children-body tr").each(function () {
+          if ($(this).find("[data-field]").filter(function () { return $(this).val().trim() !== ""; }).length > 0 ||
+              $(this).find('[data-optout]').is(":checked")) {
+            anyRowFilled = true;
+          }
+        });
+        if (!anyRowFilled) {
+          toast("Please add at least one beneficiary before saving.", "error");
+          return;
+        }
         var childValid = true;
         $("#children-body tr").each(function () {
           var $fn = $(this).find('[data-field="full_name"]');
@@ -2719,6 +2764,8 @@
             } else { $email.removeClass("is-invalid"); }
             if (!phoneOo.is(":checked") && !$phone.val().trim()) {
               $phone.addClass("is-invalid"); childValid = false;
+            } else if ($phone.val().trim() && !phoneOo.is(":checked") && !isPhone($phone.val().trim())) {
+              $phone.addClass("is-invalid"); childValid = false;
             } else { $phone.removeClass("is-invalid"); }
           }
         });
@@ -2727,6 +2774,22 @@
           return;
         }
         var savedChildren = getTableData("children-body").filter(function(r) { return r.full_name; });
+        // Check for duplicate email or phone (#17)
+        var seenEmails = {}, seenPhones = {};
+        var dupMsg = null;
+        savedChildren.forEach(function(c) {
+          var em = (c.email || '').trim().toLowerCase();
+          var ph = (c.phone || '').trim();
+          if (em && em !== '__optout__') {
+            if (seenEmails[em]) { dupMsg = 'Two or more beneficiaries share the same email address.'; }
+            seenEmails[em] = true;
+          }
+          if (ph && ph !== '__optout__') {
+            if (seenPhones[ph]) { dupMsg = dupMsg || 'Two or more beneficiaries share the same phone number.'; }
+            seenPhones[ph] = true;
+          }
+        });
+        if (dupMsg) { toast(dupMsg, "error"); return; }
         p.children = JSON.stringify(savedChildren);
         // Sync matching names in Access & Unlock (email + phone only)
         if (myData.access_people && myData.access_people.length) {
@@ -2744,6 +2807,15 @@
           return;
         }
         var savedAccess = getTableData("access-body");
+        // Deduplicate by full_name + email combo (#15)
+        var seenAccess = {};
+        var dupAccess = false;
+        savedAccess = savedAccess.filter(function(row) {
+          var key = (row.full_name || '').toLowerCase() + '|' + (row.email || '').toLowerCase();
+          if (seenAccess[key]) { dupAccess = true; return false; }
+          seenAccess[key] = true; return true;
+        });
+        if (dupAccess) toast("Duplicate Access & Unlock entry removed.", "info");
         p.access_people = JSON.stringify(savedAccess);
         // Sync matching names in Beneficiaries (email + phone only)
         if (myData.children && myData.children.length) {
@@ -2754,9 +2826,28 @@
           p.children = JSON.stringify(syncedChildren);
         }
         break;
-      case "personal_items":
+      case "personal_items": {
+        var itemsValid = true;
+        $("#items-body tr").each(function () {
+          var $desc = $(this).find('[data-field="description"]');
+          var $recip = $(this).find('[data-field="recipient"]');
+          var descVal = $desc.val ? $desc.val().trim() : '';
+          var recipVal = $recip.val ? $recip.val().trim() : '';
+          var rowHasAnyData = descVal || recipVal;
+          if (rowHasAnyData) {
+            if (!descVal) { $desc.addClass("is-invalid"); itemsValid = false; }
+            else { $desc.removeClass("is-invalid"); }
+            if (!recipVal || recipVal === 'Select') { $recip.addClass("is-invalid"); itemsValid = false; }
+            else { $recip.removeClass("is-invalid"); }
+          }
+        });
+        if (!itemsValid) {
+          toast("Each Personal Item requires a Description and a Recipient.", "error");
+          return;
+        }
         p.personal_items = JSON.stringify(getTableData("items-body"));
         break;
+      }
       case "burial": {
         function getOwnerBurial(prefix) {
           return {
@@ -2840,6 +2931,7 @@
         $btn.removeClass('lhp-btn-saving').html('<i class="bi bi-check-circle me-2"></i>Save Changes');
         toast("Section saved.");
         updateRings(data.completion);
+        if (data.updated_at && myData) myData._updated_at = data.updated_at;
         loadMyRecord(recordId, function () {
           hideModal("lhp-section-modal");
         });
@@ -2959,13 +3051,12 @@
         var newName = $("#ppar-name").val().trim();
         if (newName) {
           var _parts = newName.trim().split(/\s+/);
-          var _ini   = _parts[0].charAt(0).toUpperCase();
-          var _av    = _ini + (_parts.length > 1 ? _parts[_parts.length-1].charAt(0).toUpperCase() : '');
-          $(".lhp-sidebar-user-info .fw-bold").text(newName);
+          var _av = _parts.map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+          $(".lhp-sidebar-user-info .fw-bold, .lhp-sidebar-user-info .fw-semibold").text(newName);
           $("#active-record-title").text(newName + "'s Lighthouse");
           var $avLg = $(".lhp-sidebar-user .lhp-avatar-lg");
           if (!$avLg.hasClass("lhp-avatar-logo")) $avLg.text(_av);
-          $(".lhp-avatar-sm").text(_ini);
+          $(".lhp-avatar-sm").text(_av);
         }
         // Reload record (section cards) + records list (card titles)
         var rid = parseInt($("#lhp-my-record-id").val()) || 0;
